@@ -38,7 +38,7 @@ define i32 @Stack_GetLength(%stackType* %this) nounwind
 
 define void @Stack_IncrementLength(%stackType* %this) nounwind
 { 
-  ; loads the length of the stack, adds one, stores it into the stackrType
+  ; loads the length of the stack, adds one, stores it into the stackType
   %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %2 = load i32, i32* %1
   %3 = add i32 1, %2
@@ -48,11 +48,29 @@ define void @Stack_IncrementLength(%stackType* %this) nounwind
 
 define void @Stack_DecrementLength(%stackType* %this) nounwind
 { 
-  ; loads the length of the stack, adds one, stores it into the stackrType
+  ; loads the length of the stack, adds one, stores it into the stackType
   %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %2 = load i32, i32* %1
   %3 = sub i32 1, %2
-  store i32 %3, i32* %1 
+  %4 = sub i32 0, %3
+  store i32 %4, i32* %1 
+  ret void
+}
+
+define void @Stack_PushInt(%stackType* %this, i32 %int) nounwind
+{ 
+  ; loads the length of the stack, adds one, stores it into the stackType
+  %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
+  %length = load i32, i32* %lengthptr
+
+  ; gets the pointer element at index 5 of the array
+  %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
+  %1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 %length
+  ; loads the number from the given pointer
+  store i32 %int, i32* %1
+
+
+  call void @Stack_IncrementLength(%stackType* %this)
   ret void
 }
 
@@ -63,22 +81,38 @@ define i32 @main(i32 %argc, i8** %argv) {
 
   ; bullcode
 
-  ;prints the initial length of the stack: 0
+  ;prints the initial length of the stack: 
   %length = call i32 @Stack_GetLength(%stackType* %stack)
-  %1 = call i32 @printInt(i32 %length)
+  %call = call i32 @printInt(i32 %length)
 
-  ;increments the length of the stack and prints the length
-  call void @Stack_IncrementLength(%stackType* %stack)
 
+
+  ;WILL PRINt OUT A RANDOM NUMBER
+  ; gets the pointer element at index 0 of the array
+  %1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  %2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ; loads the number from the given pointer
+  %3 = load i32, i32* %2
+  ; calls print on the element %3
+  %4 = call i32 @printInt(i32 %3)
+
+  ;pushes 70 onto the stack
+  call void @Stack_PushInt(%stackType* %stack, i32 70)
+
+  ; gets the pointer element at index 0 of the array
+  %5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  %6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ; loads the number from the given pointer
+  %7 = load i32, i32* %2
+  ; calls print on the element %7
+  %8 = call i32 @printInt(i32 %7)
+
+
+
+
+  ;prints the length of the stack after pushing an i32: 
   %newlength = call i32 @Stack_GetLength(%stackType* %stack)
-  %2 = call i32 @printInt(i32 %newlength)
-
-  ;decrements the length and prints out the new length
-  call void @Stack_DecrementLength(%stackType* %stack)
-
-  %newerlength = call i32 @Stack_GetLength(%stackType* %stack)
-  %3 = call i32 @printInt(i32 %newerlength)
-
+  %newcall = call i32 @printInt(i32 %newlength)
 
 
   ;end bullcode
