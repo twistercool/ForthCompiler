@@ -147,15 +147,6 @@ def printCode() = {
 import ammonite.ops._
 
 @main
-def ast(fname: String) = {
-    val path = os.pwd / fname
-    val file = fname.stripSuffix("." ++ path.ext)
-    val ast = tree(os.read(path))
-    // println(compile(ast))
-    println(ast)
-}
-
-@main
 def write(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
