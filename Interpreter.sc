@@ -223,7 +223,7 @@ def testInterpreter() = {
 }
 
 @main
-def runFile(fname: String) = {
+def run(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
     val ast = tree(os.read(path).concat(" "))

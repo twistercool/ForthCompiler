@@ -21,7 +21,7 @@ case class Loop(subroutine: List[Node]) extends Node
 def command[_: P] = P(
                     ("DEPTH"|"DROP"|"2DROP"|"3DROP"|"DUP"|"2DUP"|"3DUP"|"OVER"|"2OVER"|
                     "ROT"|"-ROT"|"SWAP"|"2SWAP"|"TUCK"|
-                    "+"|"-"|"*"|"EMIT"|"ABS"|"MAX"|"MIN"|"MOD"|
+                    "+"|"-"|"*"|"/"|"EMIT"|"ABS"|"MAX"|"MIN"|"MOD"|
                     "*/MOD"|"/MOD"|"NEGATE"|"."|"CR").!.map{ str => Command(str) }
 )
 def number[_: P] = P(

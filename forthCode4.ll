@@ -146,16 +146,18 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
-   call void @Stack_PushInt(%stackType* %stack, i32 1)
-   call void @Stack_PushInt(%stackType* %stack, i32 2)
-   call void @Stack_PushInt(%stackType* %stack, i32 3)
-   call void @Stack_PushInt(%stackType* %stack, i32 4)
+  call void @Stack_PushInt(%stackType* %stack, i32 8)
+  call void @Stack_PushInt(%stackType* %stack, i32 4)
+  %top_0 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_1 = call i32 @Stack_Pop(%stackType* %stack)
+  %subvalue_2 = udiv i32 %second_1, %top_0
+  call void @Stack_PushInt(%stackType* %stack, i32 %subvalue_2)
 
 
   %a = call i32 @Stack_Pop(%stackType* %stack)
-  %b = call i32 @Stack_Pop(%stackType* %stack)
-  %c = call i32 @Stack_Pop(%stackType* %stack)
-  %d = call i32 @Stack_Pop(%stackType* %stack)
+  ;%b = call i32 @Stack_Pop(%stackType* %stack)
+  ;%c = call i32 @Stack_Pop(%stackType* %stack)
+  ;%d = call i32 @Stack_Pop(%stackType* %stack)
   
 
   ; allocates 3 to the element at index 5 of the array 

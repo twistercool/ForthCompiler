@@ -29,7 +29,7 @@ import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 
 implicit def string_inters(sc: StringContext) = new {
-    def i(args: Any*): String = "   " ++ sc.s(args:_*) ++ "\n"
+    def i(args: Any*): String = "  " ++ sc.s(args:_*) ++ "\n"
     def l(args: Any*): String = sc.s(args:_*) ++ ":\n"
     def m(args: Any*): String = sc.s(args:_*) ++ "\n"
 }
@@ -194,9 +194,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 val ending = """
 
   %a = call i32 @Stack_Pop(%stackType* %stack)
-  %b = call i32 @Stack_Pop(%stackType* %stack)
-  %c = call i32 @Stack_Pop(%stackType* %stack)
-  %d = call i32 @Stack_Pop(%stackType* %stack)
+  ;%b = call i32 @Stack_Pop(%stackType* %stack)
+  ;%c = call i32 @Stack_Pop(%stackType* %stack)
+  ;%d = call i32 @Stack_Pop(%stackType* %stack)
   
 
   ; allocates 3 to the element at index 5 of the array 
@@ -217,6 +217,47 @@ val ending = """
 def compile_prog(prog: List[Node]): String = prog match {
   case Push(x) :: rest => {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
+  }
+  case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
+  case _ => ""
+}
+
+def compile_command(str: String): String = str match {
+  case "+" => { 
+    val nametop = Fresh("top")
+    val namesecond = Fresh("second")
+    val addedValue = Fresh("added")
+    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${addedValue} = add i32 %${namesecond}, %${nametop}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${addedValue})"
+  }
+  case "-" => { 
+    val nametop = Fresh("top")
+    val namesecond = Fresh("second")
+    val subvalue = Fresh("subvalue")
+    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = sub i32 %${namesecond}, %${nametop}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
+  }
+  case "/" => { 
+    val nametop = Fresh("top")
+    val namesecond = Fresh("second")
+    val subvalue = Fresh("subvalue")
+    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = udiv i32 %${namesecond}, %${nametop}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
+  }
+  case "*" => { 
+    val nametop = Fresh("top")
+    val namesecond = Fresh("second")
+    val product = Fresh("product")
+    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${product} = mul i32 %${namesecond}, %${nametop}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${product})"
   }
   case _ => ""
 }
