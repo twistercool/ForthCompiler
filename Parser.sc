@@ -28,10 +28,10 @@ def number[_: P] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ x => Push(x.toInt) }
     | "0".!.map{ x => Push(x.toInt) }
 )
-def comment[_: P] = P( ("(" ~ CharIn(" a-zA-Z0-9_.!?,\n\t").rep ~ ")") | 
+def comment[_: P] = P( ("(" ~ CharIn(" a-zA-Z0-9_.!?,\n\t\r").rep ~ ")") | 
     ("\\" ~ CharIn(" a-zA-Z0-9_.!?,\t").rep) )
 def white[_: P] = P(
-    (CharIn(" \n\t")).rep(1)
+    (CharIn(" \r\n\t")).rep(1)
 )
 def idParser[_: P] = P(
     (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!.map{x => Command(x)}
@@ -52,7 +52,7 @@ def loop[_: P] = P(
     .map{ x => Loop(x.asInstanceOf[List[Node]]) }
 )
 def program[_: P] = P(
-    ((definition | comment | white | subroutine).rep ~ End).map{ x => x.filter(_ != ())}
+    ((definition | comment | white | number | subroutine).rep).map{ x => x.filter(_ != ())}
 )
            
 
@@ -91,7 +91,7 @@ def testParse() = {
 def parseFile(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
-    val ast = tree(os.read(path))
+    val ast = tree(os.read(path).concat(" "))
     println(ast)
 }
 

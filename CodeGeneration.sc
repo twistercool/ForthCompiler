@@ -14,9 +14,25 @@ import $file.Parser, Parser._
 //   }
 // }
 
-type Def = Map[Command, List[Node]] //associates a list of commands/subroutines to a definition
-type Stack = List[Int] //top of the stack is index 0
+// for generating new labels
+var counter = -1
 
+def Fresh(x: String) = {
+  counter += 1
+  x ++ "_" ++ counter.toString()
+}
+
+
+// convenient string interpolations 
+// for instructions, labels and methods
+import scala.language.implicitConversions
+import scala.language.reflectiveCalls
+
+implicit def string_inters(sc: StringContext) = new {
+    def i(args: Any*): String = "   " ++ sc.s(args:_*) ++ "\n"
+    def l(args: Any*): String = sc.s(args:_*) ++ ":\n"
+    def m(args: Any*): String = sc.s(args:_*) ++ "\n"
+}
 
 // NECESSARY TO IMPLEMENT: A WAY OF GETTING THE AMOUNT OF ELEMENTS IN THE STACK/ARRAY
 // A WAY OF ADDING AN ELEMENT AT THE END OF THE ARRAY
@@ -90,15 +106,34 @@ define void @Stack_PushInt(%stackType* %this, i32 %int) nounwind
   %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %length = load i32, i32* %lengthptr
 
-  ; gets the pointer element at index 5 of the array
+  ; gets the pointer element at index %length of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
   %1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 %length
-  ; loads the number from the given pointer
+  ; stores the number in the given pointer
   store i32 %int, i32* %1
-
 
   call void @Stack_IncrementLength(%stackType* %this)
   ret void
+}
+
+define i32 @Stack_Pop(%stackType* %this) nounwind
+{
+  ; loads the length of the stack, adds one, stores it into the stackType
+  %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
+  %length = load i32, i32* %lengthptr
+  %negindex = sub i32 1, %length
+  %index = sub i32 0, %negindex
+
+  ; gets the pointer element at index %index of the array
+  %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
+  %indexptr = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 %index
+  ; loads the number from the given pointer
+  %popped = load i32, i32* %indexptr
+
+  %printpopped = call i32 @printInt(i32 %popped)
+
+  call void @Stack_DecrementLength(%stackType* %this)
+  ret i32 %popped
 }
 
 define i32 @main(i32 %argc, i8** %argv) {
@@ -109,43 +144,47 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; bullcode
 
   ;prints the initial length of the stack: 
-  %length = call i32 @Stack_GetLength(%stackType* %stack)
-  %call = call i32 @printInt(i32 %length)
+  ;%length = call i32 @Stack_GetLength(%stackType* %stack)
+  ;%call = call i32 @printInt(i32 %length)
 
 
 
-  ;WILL PRINt OUT A RANDOM NUMBER
+  ;WILL PRINT OUT A RANDOM NUMBER
   ; gets the pointer element at index 0 of the array
-  %1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  %2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ;%1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  ;%2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
   ; loads the number from the given pointer
-  %3 = load i32, i32* %2
+  ;%3 = load i32, i32* %2
   ; calls print on the element %3
-  %4 = call i32 @printInt(i32 %3)
+  ;%4 = call i32 @printInt(i32 %3)
 
-  ;pushes 70 onto the stack
-  call void @Stack_PushInt(%stackType* %stack, i32 70)
+  ;pushes 70 onto the stack and 75
+  ;call void @Stack_PushInt(%stackType* %stack, i32 70)
+  ;call void @Stack_PushInt(%stackType* %stack, i32 75)
 
   ; gets the pointer element at index 0 of the array
-  %5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  %6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ;%5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  ;%6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
   ; loads the number from the given pointer
-  %7 = load i32, i32* %2
+  ;%7 = load i32, i32* %2
   ; calls print on the element %7
-  %8 = call i32 @printInt(i32 %7)
+  ;%8 = call i32 @printInt(i32 %7)
+
+  
+  ;%popped1 = call i32 @Stack_Pop(%stackType* %stack)
+  ;%printpopped1 = call i32 @printInt(i32 %popped1)
+
+  ;%popped2 = call i32 @Stack_Pop(%stackType* %stack)
+  ;%printpopped2 = call i32 @printInt(i32 %popped2)
+
 
 
 
 
   ;prints the length of the stack after pushing an i32: 
-  %newlength = call i32 @Stack_GetLength(%stackType* %stack)
-  %newcall = call i32 @printInt(i32 %newlength)
+  ;%newlength = call i32 @Stack_GetLength(%stackType* %stack)
+  ;%newcall = call i32 @printInt(i32 %newlength)
 
-
-  ;end bullcode
-
-  ; allocates a stack of 100 elements
-  ;%stack = alloca [100 x i32]
 
   ; COMPILED CODE STARTS HERE
 
@@ -153,6 +192,13 @@ define i32 @main(i32 %argc, i8** %argv) {
 """
 
 val ending = """
+
+  %a = call i32 @Stack_Pop(%stackType* %stack)
+  %b = call i32 @Stack_Pop(%stackType* %stack)
+  %c = call i32 @Stack_Pop(%stackType* %stack)
+  %d = call i32 @Stack_Pop(%stackType* %stack)
+  
+
   ; allocates 3 to the element at index 5 of the array 
   ;%1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 5
   ;store i32 3, i32* %1
@@ -169,6 +215,9 @@ val ending = """
 
 
 def compile_prog(prog: List[Node]): String = prog match {
+  case Push(x) :: rest => {
+    i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
+  }
   case _ => ""
 }
 
@@ -188,9 +237,8 @@ import ammonite.ops._
 def write(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
-    val ast = tree(os.read(path))
+    val ast = tree(os.read(path).concat(" "))
     val code = compile(ast)
-    // println(code)
     os.write.over(os.pwd / (file ++ ".ll"), code)
 }
 

@@ -87,7 +87,7 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ; loads the number from the given pointer
   %popped = load i32, i32* %indexptr
 
-
+  %printpopped = call i32 @printInt(i32 %popped)
 
   call void @Stack_DecrementLength(%stackType* %this)
   ret i32 %popped
@@ -101,56 +101,62 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; bullcode
 
   ;prints the initial length of the stack: 
-  %length = call i32 @Stack_GetLength(%stackType* %stack)
-  %call = call i32 @printInt(i32 %length)
+  ;%length = call i32 @Stack_GetLength(%stackType* %stack)
+  ;%call = call i32 @printInt(i32 %length)
 
 
 
   ;WILL PRINT OUT A RANDOM NUMBER
   ; gets the pointer element at index 0 of the array
-  %1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  %2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ;%1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  ;%2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
   ; loads the number from the given pointer
-  %3 = load i32, i32* %2
+  ;%3 = load i32, i32* %2
   ; calls print on the element %3
-  %4 = call i32 @printInt(i32 %3)
+  ;%4 = call i32 @printInt(i32 %3)
 
   ;pushes 70 onto the stack and 75
-  call void @Stack_PushInt(%stackType* %stack, i32 70)
-  call void @Stack_PushInt(%stackType* %stack, i32 75)
+  ;call void @Stack_PushInt(%stackType* %stack, i32 70)
+  ;call void @Stack_PushInt(%stackType* %stack, i32 75)
 
   ; gets the pointer element at index 0 of the array
-  %5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  %6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
+  ;%5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
+  ;%6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
   ; loads the number from the given pointer
-  %7 = load i32, i32* %2
+  ;%7 = load i32, i32* %2
   ; calls print on the element %7
-  %8 = call i32 @printInt(i32 %7)
+  ;%8 = call i32 @printInt(i32 %7)
 
   
-  %popped1 = call i32 @Stack_Pop(%stackType* %stack)
-  %printpopped1 = call i32 @printInt(i32 %popped1)
+  ;%popped1 = call i32 @Stack_Pop(%stackType* %stack)
+  ;%printpopped1 = call i32 @printInt(i32 %popped1)
 
-  %popped2 = call i32 @Stack_Pop(%stackType* %stack)
-  %printpopped2 = call i32 @printInt(i32 %popped2)
+  ;%popped2 = call i32 @Stack_Pop(%stackType* %stack)
+  ;%printpopped2 = call i32 @printInt(i32 %popped2)
 
 
 
 
 
   ;prints the length of the stack after pushing an i32: 
-  %newlength = call i32 @Stack_GetLength(%stackType* %stack)
-  %newcall = call i32 @printInt(i32 %newlength)
+  ;%newlength = call i32 @Stack_GetLength(%stackType* %stack)
+  ;%newcall = call i32 @printInt(i32 %newlength)
 
-
-  ;end bullcode
-
-  ; allocates a stack of 100 elements
-  ;%stack = alloca [100 x i32]
 
   ; COMPILED CODE STARTS HERE
 
 
+   call void @Stack_PushInt(%stackType* %stack, i32 1)
+   call void @Stack_PushInt(%stackType* %stack, i32 2)
+   call void @Stack_PushInt(%stackType* %stack, i32 3)
+   call void @Stack_PushInt(%stackType* %stack, i32 4)
+
+
+  %a = call i32 @Stack_Pop(%stackType* %stack)
+  %b = call i32 @Stack_Pop(%stackType* %stack)
+  %c = call i32 @Stack_Pop(%stackType* %stack)
+  %d = call i32 @Stack_Pop(%stackType* %stack)
+  
 
   ; allocates 3 to the element at index 5 of the array 
   ;%1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 5
