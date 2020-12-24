@@ -146,17 +146,20 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
-  call void @Stack_PushInt(%stackType* %stack, i32 8)
-  call void @Stack_PushInt(%stackType* %stack, i32 4)
+  call void @Stack_PushInt(%stackType* %stack, i32 1)
+  call void @Stack_PushInt(%stackType* %stack, i32 2)
+  call void @Stack_PushInt(%stackType* %stack, i32 3)
   %top_0 = call i32 @Stack_Pop(%stackType* %stack)
   %second_1 = call i32 @Stack_Pop(%stackType* %stack)
-  %subvalue_2 = udiv i32 %second_1, %top_0
-  call void @Stack_PushInt(%stackType* %stack, i32 %subvalue_2)
+  %third_2 = call i32 @Stack_Pop(%stackType* %stack)
+  call void @Stack_PushInt(%stackType* %stack, i32 %top_0)
+  call void @Stack_PushInt(%stackType* %stack, i32 %third_2)
+  call void @Stack_PushInt(%stackType* %stack, i32 %second_1)
 
 
   %a = call i32 @Stack_Pop(%stackType* %stack)
-  ;%b = call i32 @Stack_Pop(%stackType* %stack)
-  ;%c = call i32 @Stack_Pop(%stackType* %stack)
+  %b = call i32 @Stack_Pop(%stackType* %stack)
+  %c = call i32 @Stack_Pop(%stackType* %stack)
   ;%d = call i32 @Stack_Pop(%stackType* %stack)
   
 

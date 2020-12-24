@@ -194,8 +194,8 @@ define i32 @main(i32 %argc, i8** %argv) {
 val ending = """
 
   %a = call i32 @Stack_Pop(%stackType* %stack)
-  ;%b = call i32 @Stack_Pop(%stackType* %stack)
-  ;%c = call i32 @Stack_Pop(%stackType* %stack)
+  %b = call i32 @Stack_Pop(%stackType* %stack)
+  %c = call i32 @Stack_Pop(%stackType* %stack)
   ;%d = call i32 @Stack_Pop(%stackType* %stack)
   
 
@@ -259,17 +259,95 @@ def compile_command(str: String): String = str match {
     i"%${product} = mul i32 %${namesecond}, %${nametop}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${product})"
   }
+  case "DEPTH" => {
+    val length = Fresh("Length")
+    i"%${length} = call i32 @Stack_GetLength(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${length})"
+  }
+  case "DROP" => {
+    val trashed = Fresh("trahed") 
+    i"%${trashed} = call i32 @Stack_Pop(%stackType* %stack)"
+  }
+  case "2DROP" => {
+    val trashed1 = Fresh("trashed1")
+    val trashed2 = Fresh("trashed2")
+    i"%${trashed1} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed2} = call i32 @Stack_Pop(%stackType* %stack)"
+  }
+  case "3DROP" => {
+    val trashed1 = Fresh("trashed1")
+    val trashed2 = Fresh("trashed2")
+    val trashed3 = Fresh("trashed3")
+    i"%${trashed1} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed2} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed3} = call i32 @Stack_Pop(%stackType* %stack)"
+  }
+  case "OVER" => { //could optimise it by just copying the previous value but it doesn't seem very forth-like
+    val top = Fresh("top")
+    val second = Fresh("second")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+  }
+  case "2OVER" => { //same as comment above
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val third = Fresh("third")
+    val fourth = Fresh("fourth")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${fourth} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+  }
+  case "ROT" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val third = Fresh("third")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+  }
+  case "-ROT" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val third = Fresh("third")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+  }
+  // case "SWAP" => {
+  //   val top = stack.head
+  //   val second = stack.tail.head
+  //   val newStack = second :: top :: stack.tail.tail
+  //   (defs, newStack)
+  // }
+  // case "2SWAP" => {
+  //   val top = stack.head
+  //   val second = stack.tail.head
+  //   val third = stack.tail.tail.head
+  //   val fourth = stack.tail.tail.tail.head
+  //   val newStack = third :: fourth :: top :: second :: stack.tail.tail.tail.tail
+  //   (defs, newStack)
+  // }
   case _ => ""
 }
 
 def compile(prog: List[Node]): String = {
   prelude ++ compile_prog(prog) ++ ending
-}
-
-
-@main 
-def printCode() = {
-  println("code")
 }
 
 import ammonite.ops._
