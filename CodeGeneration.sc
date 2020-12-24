@@ -94,9 +94,8 @@ define void @Stack_DecrementLength(%stackType* %this) nounwind
   ; loads the length of the stack, adds one, stores it into the stackType
   %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %2 = load i32, i32* %1
-  %3 = sub i32 1, %2
-  %4 = sub i32 0, %3
-  store i32 %4, i32* %1 
+  %3 = sub i32 %2, 1
+  store i32 %3, i32* %1 
   ret void
 }
 
@@ -130,7 +129,7 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ; loads the number from the given pointer
   %popped = load i32, i32* %indexptr
 
-  %printpopped = call i32 @printInt(i32 %popped)
+  ;%printpopped = call i32 @printInt(i32 %popped)
 
   call void @Stack_DecrementLength(%stackType* %this)
   ret i32 %popped
@@ -193,9 +192,9 @@ define i32 @main(i32 %argc, i8** %argv) {
 
 val ending = """
 
-  %a = call i32 @Stack_Pop(%stackType* %stack)
-  %b = call i32 @Stack_Pop(%stackType* %stack)
-  %c = call i32 @Stack_Pop(%stackType* %stack)
+  ;%a = call i32 @Stack_Pop(%stackType* %stack)
+  ;%b = call i32 @Stack_Pop(%stackType* %stack)
+  ;%c = call i32 @Stack_Pop(%stackType* %stack)
   ;%d = call i32 @Stack_Pop(%stackType* %stack)
   
 
@@ -329,19 +328,82 @@ def compile_command(str: String): String = str match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++ 
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
   }
-  // case "SWAP" => {
+  case "SWAP" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+  }
+  case "2SWAP" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val third = Fresh("third")
+    val fourth = Fresh("fourth")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${fourth} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+  }
+  case "TUCK" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+  }
+  // case "EMIT" => {
+  //   val value = stack.head
+  //   print(s"""${value.toChar}""")
+  //   (defs, stack.tail)
+  // }
+  // case "ABS" => {
+  //   val value = stack.head
+  //   if (value < 0) (defs, -value :: stack.tail) 
+  //   else (defs, stack)
+  // }
+  // case "MAX" => {
   //   val top = stack.head
   //   val second = stack.tail.head
-  //   val newStack = second :: top :: stack.tail.tail
+  //   if (top > second) (defs, top :: stack.tail.tail)
+  //   else (defs, second :: stack.tail.tail)
+  // }
+  // case "MIN" => {
+  //   val top = stack.head
+  //   val second = stack.tail.head
+  //   if (top < second) (defs, top :: stack.tail.tail)
+  //   else (defs, second :: stack.tail.tail)
+  // }
+  // case "MOD" => {
+
+  //   val one = stack.head
+  //   val two = stack.tail.head
+  //   val newStack = (two % one) :: stack.tail.tail
   //   (defs, newStack)
   // }
-  // case "2SWAP" => {
-  //   val top = stack.head
-  //   val second = stack.tail.head
-  //   val third = stack.tail.tail.head
-  //   val fourth = stack.tail.tail.tail.head
-  //   val newStack = third :: fourth :: top :: second :: stack.tail.tail.tail.tail
-  //   (defs, newStack)
+  case "NEGATE" => {
+    val top = Fresh("top")
+    val negatetop = Fresh("negatetop")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${negatetop} = sub i32 0, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${negatetop})"
+  }
+  case "." => {
+    val top = Fresh("top")
+    val printTop = Fresh("printTop")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${printTop} = call i32 @printInt(i32 %${top})"
+  }
+  // case "CR" => {
+  //   println("")
+  //   (defs, stack)
   // }
   case _ => ""
 }
