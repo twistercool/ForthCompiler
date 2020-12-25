@@ -364,11 +364,28 @@ def compile_command(str: String): String = str match {
   //   print(s"""${value.toChar}""")
   //   (defs, stack.tail)
   // }
-  // case "ABS" => {
-  //   val value = stack.head
-  //   if (value < 0) (defs, -value :: stack.tail) 
-  //   else (defs, stack)
-  // }
+  case "ABS" => {
+    val top = Fresh("top")
+    val minustop = Fresh("minustop")
+    val compare = Fresh("compare")
+    val entryLabel = Fresh("entryLabel")
+    val ifpositive = Fresh("ifpositive")
+    val elsenegative = Fresh("else")
+    val finish = Fresh("finish")
+    i"br label %${entryLabel}" ++
+    l"${entryLabel}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${compare} = icmp sge i32 %${top}, 0" ++
+    i"br i1 %${compare}, label %${ifpositive}, label %${elsenegative}" ++
+    l"${ifpositive}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"br label %${finish}" ++
+    l"${elsenegative}" ++
+    i"%${minustop} = sub i32 0, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${minustop})" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
   // case "MAX" => {
   //   val top = stack.head
   //   val second = stack.tail.head
