@@ -1,1 +1,1 @@
--1 2 3 -4 ABS . ABS . ABS . ABS .
+4 -12 5 MIN . .

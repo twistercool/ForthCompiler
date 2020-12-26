@@ -367,7 +367,7 @@ def compile_command(str: String): String = str match {
   case "ABS" => {
     val top = Fresh("top")
     val minustop = Fresh("minustop")
-    val compare = Fresh("compare")
+    val isGreater = Fresh("isGreater")
     val entryLabel = Fresh("entryLabel")
     val ifpositive = Fresh("ifpositive")
     val elsenegative = Fresh("else")
@@ -375,8 +375,8 @@ def compile_command(str: String): String = str match {
     i"br label %${entryLabel}" ++
     l"${entryLabel}" ++
     i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${compare} = icmp sge i32 %${top}, 0" ++
-    i"br i1 %${compare}, label %${ifpositive}, label %${elsenegative}" ++
+    i"%${isGreater} = icmp sge i32 %${top}, 0" ++
+    i"br i1 %${isGreater}, label %${ifpositive}, label %${elsenegative}" ++
     l"${ifpositive}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
     i"br label %${finish}" ++
@@ -386,18 +386,50 @@ def compile_command(str: String): String = str match {
     i"br label %${finish}" ++
     l"${finish}"
   }
-  // case "MAX" => {
-  //   val top = stack.head
-  //   val second = stack.tail.head
-  //   if (top > second) (defs, top :: stack.tail.tail)
-  //   else (defs, second :: stack.tail.tail)
-  // }
-  // case "MIN" => {
-  //   val top = stack.head
-  //   val second = stack.tail.head
-  //   if (top < second) (defs, top :: stack.tail.tail)
-  //   else (defs, second :: stack.tail.tail)
-  // }
+  case "MAX" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isGreater = Fresh("isGreater")
+    val entry = Fresh("entry")
+    val tophigher = Fresh("tophigher")
+    val secondhigher = Fresh("secondhigher")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isGreater} = icmp sge i32 %${top}, %${second}" ++
+    i"br i1 %${isGreater}, label %${tophigher}, label %${secondhigher}" ++
+    l"${tophigher}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"br label %${finish}" ++
+    l"${secondhigher}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "MIN" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val topsmaller = Fresh("topsmaller")
+    val secondsmaller = Fresh("secondsmaller")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp sle i32 %${top}, %${second}" ++
+    i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
+    l"${topsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"br label %${finish}" ++
+    l"${secondsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
   // case "MOD" => {
 
   //   val one = stack.head

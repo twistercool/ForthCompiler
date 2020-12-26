@@ -145,70 +145,26 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
-  call void @Stack_PushInt(%stackType* %stack, i32 -1)
-  call void @Stack_PushInt(%stackType* %stack, i32 2)
-  call void @Stack_PushInt(%stackType* %stack, i32 3)
-  call void @Stack_PushInt(%stackType* %stack, i32 -4)
-  br label %entryLabel_3
-entryLabel_3:
+  call void @Stack_PushInt(%stackType* %stack, i32 4)
+  call void @Stack_PushInt(%stackType* %stack, i32 -12)
+  call void @Stack_PushInt(%stackType* %stack, i32 5)
+  br label %entry_3
+entry_3:
   %top_0 = call i32 @Stack_Pop(%stackType* %stack)
-  %compare_2 = icmp sge i32 %top_0, 0
-  br i1 %compare_2, label %ifpositive_4, label %else_5
-ifpositive_4:
+  %second_1 = call i32 @Stack_Pop(%stackType* %stack)
+  %isSmaller_2 = icmp sle i32 %top_0, %second_1
+  br i1 %isSmaller_2, label %topsmaller_4, label %secondsmaller_5
+topsmaller_4:
   call void @Stack_PushInt(%stackType* %stack, i32 %top_0)
   br label %finish_6
-else_5:
-  %minustop_1 = sub i32 0, %top_0
-  call void @Stack_PushInt(%stackType* %stack, i32 %minustop_1)
+secondsmaller_5:
+  call void @Stack_PushInt(%stackType* %stack, i32 %second_1)
   br label %finish_6
 finish_6:
   %top_7 = call i32 @Stack_Pop(%stackType* %stack)
   %printTop_8 = call i32 @printInt(i32 %top_7)
-  br label %entryLabel_12
-entryLabel_12:
   %top_9 = call i32 @Stack_Pop(%stackType* %stack)
-  %compare_11 = icmp sge i32 %top_9, 0
-  br i1 %compare_11, label %ifpositive_13, label %else_14
-ifpositive_13:
-  call void @Stack_PushInt(%stackType* %stack, i32 %top_9)
-  br label %finish_15
-else_14:
-  %minustop_10 = sub i32 0, %top_9
-  call void @Stack_PushInt(%stackType* %stack, i32 %minustop_10)
-  br label %finish_15
-finish_15:
-  %top_16 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_17 = call i32 @printInt(i32 %top_16)
-  br label %entryLabel_21
-entryLabel_21:
-  %top_18 = call i32 @Stack_Pop(%stackType* %stack)
-  %compare_20 = icmp sge i32 %top_18, 0
-  br i1 %compare_20, label %ifpositive_22, label %else_23
-ifpositive_22:
-  call void @Stack_PushInt(%stackType* %stack, i32 %top_18)
-  br label %finish_24
-else_23:
-  %minustop_19 = sub i32 0, %top_18
-  call void @Stack_PushInt(%stackType* %stack, i32 %minustop_19)
-  br label %finish_24
-finish_24:
-  %top_25 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_26 = call i32 @printInt(i32 %top_25)
-  br label %entryLabel_30
-entryLabel_30:
-  %top_27 = call i32 @Stack_Pop(%stackType* %stack)
-  %compare_29 = icmp sge i32 %top_27, 0
-  br i1 %compare_29, label %ifpositive_31, label %else_32
-ifpositive_31:
-  call void @Stack_PushInt(%stackType* %stack, i32 %top_27)
-  br label %finish_33
-else_32:
-  %minustop_28 = sub i32 0, %top_27
-  call void @Stack_PushInt(%stackType* %stack, i32 %minustop_28)
-  br label %finish_33
-finish_33:
-  %top_34 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_35 = call i32 @printInt(i32 %top_34)
+  %printTop_10 = call i32 @printInt(i32 %top_9)
 
 
   ;%a = call i32 @Stack_Pop(%stackType* %stack)
