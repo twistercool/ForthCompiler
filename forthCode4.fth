@@ -1,1 +1,1 @@
-10 0 DO i 10 - LEAVE . LOOP
+1 1 1 1 1 DEPTH . . . . . .

@@ -45,13 +45,15 @@ val prelude = """
 
 declare i32 @printf(i8*, ...)
 
-define i32 @printInt(i32 %x) {
+define i32 @printInt(i32 %x) 
+{
   %t0 = getelementptr [4 x i8], [4 x i8]* @.str, i32 0, i32 0
   call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
   ret i32 %x
 }
 
-define i32 @print_ASCII(i32 %x) {
+define i32 @print_ASCII(i32 %x) 
+{
   %t0 = getelementptr [4 x i8], [4 x i8]* @.asciiStr, i32 0, i32 0
   call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
   ret i32 %x
@@ -61,7 +63,8 @@ define i32 @print_ASCII(i32 %x) {
 ; more specifically as a constant array containing i8 integers
 @.nl = constant [2 x i8] c"\0A\00"
 
-define i32 @printNL() {
+define i32 @printNL() 
+{
   %castNL = getelementptr [2 x i8], [2 x i8]* @.nl, i32 0, i32 0
   call i32 (i8*, ...) @printf(i8* %castNL)
   ret i32 0
@@ -143,60 +146,16 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ; loads the number from the given pointer
   %popped = load i32, i32* %indexptr
 
-  ;%printpopped = call i32 @printInt(i32 %popped)
-
   call void @Stack_DecrementLength(%stackType* %this)
   ret i32 %popped
 }
+"""
+val mainBegin = """
 
 define i32 @main(i32 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
-
-  ; bullcode
-
-  ;prints the initial length of the stack: 
-  ;%length = call i32 @Stack_GetLength(%stackType* %stack)
-  ;%call = call i32 @printInt(i32 %length)
-
-
-
-  ;WILL PRINT OUT A RANDOM NUMBER
-  ; gets the pointer element at index 0 of the array
-  ;%1 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  ;%2 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
-  ; loads the number from the given pointer
-  ;%3 = load i32, i32* %2
-  ; calls print on the element %3
-  ;%4 = call i32 @printInt(i32 %3)
-
-  ;pushes 70 onto the stack and 75
-  ;call void @Stack_PushInt(%stackType* %stack, i32 70)
-  ;call void @Stack_PushInt(%stackType* %stack, i32 75)
-
-  ; gets the pointer element at index 0 of the array
-  ;%5 = getelementptr %stackType, %stackType* %stack, i32 0, i32 1
-  ;%6 = getelementptr [100 x i32], [100 x i32]* %1, i32 0, i32 0
-  ; loads the number from the given pointer
-  ;%7 = load i32, i32* %2
-  ; calls print on the element %7
-  ;%8 = call i32 @printInt(i32 %7)
-
-  
-  ;%popped1 = call i32 @Stack_Pop(%stackType* %stack)
-  ;%printpopped1 = call i32 @printInt(i32 %popped1)
-
-  ;%popped2 = call i32 @Stack_Pop(%stackType* %stack)
-  ;%printpopped2 = call i32 @printInt(i32 %popped2)
-
-
-
-
-
-  ;prints the length of the stack after pushing an i32: 
-  ;%newlength = call i32 @Stack_GetLength(%stackType* %stack)
-  ;%newcall = call i32 @printInt(i32 %newlength)
 
 
   ; COMPILED CODE STARTS HERE
@@ -205,29 +164,26 @@ define i32 @main(i32 %argc, i8** %argv) {
 """
 
 val ending = """
-
-  ;%a = call i32 @Stack_Pop(%stackType* %stack)
-  ;%b = call i32 @Stack_Pop(%stackType* %stack)
-  ;%c = call i32 @Stack_Pop(%stackType* %stack)
-  ;%d = call i32 @Stack_Pop(%stackType* %stack)
-  
-
-  ; allocates 3 to the element at index 5 of the array 
-  ;%1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 5
-  ;store i32 3, i32* %1
-  ; gets the pointer element at index 5 of the array
-  ;%2 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 5
-  ; loads the number from the given pointer
-  ;%3 = load i32, i32* %2
-
-  ; calls print on the element %3
-  ;%4 = call i32 @printInt(i32 %3)
   ret i32 0
 }
 """
 
+def compile_definitions(prog: List[Node]): String = prog match {
+  case Nil => ""
+  case Define(Command(id), list) :: rest => {
+    m"\ndefine void @Stack_Function_${id}(%stackType* %stack) nounwind" ++
+    m"{" ++
+    compile_prog(list) ++
+    i"ret void" ++
+    m"}" ++
+    compile_definitions(rest)
+  }
+  case _ :: rest => compile_definitions(rest)
+}
+
 
 def compile_prog(prog: List[Node]): String = prog match {
+  case Nil => ""
   case Push(x) :: rest => {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
   }
@@ -259,9 +215,10 @@ def compile_prog(prog: List[Node]): String = prog match {
     i"%${i_local3} = add i32 1, %${i_local2}" ++
     i"store i32 %${i_local3}, i32* %${i_global}" ++
     i"br label %${entry}" ++
-    l"${finish}"
+    l"${finish}" ++
+    compile_prog(rest)
   }
-  case _ => ""
+  case Define(x, y) :: rest => compile_prog(rest)
 }
 
 def compile_loop(loopRoutine: List[Node], i_global: String, finishLabel: String): String = loopRoutine match {
@@ -320,6 +277,12 @@ def compile_command(str: String): String = str match {
     i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${product} = mul i32 %${namesecond}, %${nametop}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${product})"
+  }
+  case "DUP" => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
   }
   case "DEPTH" => {
     val length = Fresh("Length")
@@ -516,13 +479,13 @@ def compile_command(str: String): String = str match {
   case "CR" => {
     i"call i32 @printNL()"
   }
-  // case _ => {
-
-  // }
+  case cmd => {
+    i"call void @Stack_Function_${cmd}(%stackType* %stack)"
+  }
 }
 
 def compile(prog: List[Node]): String = {
-  prelude ++ compile_prog(prog) ++ ending
+  prelude ++ compile_definitions(prog) ++ mainBegin ++ compile_prog(prog) ++ ending
 }
 
 import ammonite.ops._

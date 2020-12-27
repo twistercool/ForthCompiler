@@ -28,8 +28,9 @@ def number[_: P] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ x => Push(x.toInt) }
     | "0".!.map{ x => Push(x.toInt) }
 )
-def comment[_: P] = P( ("(" ~ CharIn(" a-zA-Z0-9_.!?,\n\t\r").rep ~ ")") | 
-    ("\\" ~ CharIn(" a-zA-Z0-9_.!?,\t").rep) )
+def comment[_: P] = P( ("(" ~ (!")" ~ AnyChar).rep ~ ")") | 
+    ("\\" ~ (!"\n" ~ !"\r\n" ~ AnyChar).rep)
+)
 def white[_: P] = P(
     (CharIn(" \r\n\t")).rep(1)
 )
@@ -42,10 +43,10 @@ def definition[_: P] = P(
     .map{ case (x, y) => Define(x, y.asInstanceOf[List[Node]]) }
 )
 def subroutine[_:P] = P(
-    ((number | loop | command | white | idParser | comment).rep(1)).map{ x => x.filter(_ != ())}
+    ((comment | number | loop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ())}
 )
 def looproutine[_:P] = P(
-    ((!"LOOP" ~ (number | command | white | idParser | comment)).rep(1)).map{ x => x.filter(_ != ())}
+    ((!"LOOP" ~ (comment | number | command | white | idParser)).rep(1)).map{ x => x.filter(_ != ())}
 )
 def loop[_: P] = P(
     ("DO" ~ white ~ looproutine ~ "LOOP")
