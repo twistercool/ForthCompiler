@@ -1,1 +1,1 @@
-4 -12 5 MIN . .
+10 0 DO i 10 - LEAVE . LOOP

@@ -1,18 +1,19 @@
-import $file.Parser, Parser._
+/*  AUTHOR: Pierre Brassart
+    
+    This is the code generator for the Forth Compiler project
 
-// compile function for declarations and main
-// def compile_decl(d: Decl) : String = d match {
-//   case Def(name, args, body) => { 
-//     m"define i32 @$name (${args.mkString("i32 %", ", i32 %", "")}) {" ++
-//     compile_exp(CPSi(body)) ++
-//     m"}\n"
-//   }
-//   case Main(body) => {
-//     m"define i32 @main() {" ++
-//     compile_exp(CPS(body)(_ => KReturn(KNum(0)))) ++
-//     m"}\n"
-//   }
-// }
+    To run a Forth .fth file, run this command:
+
+    amm CodeGeneration.sc run <fileName>
+
+
+    To compile a Forth .fth file to LLVM-IR without running it, run this command:
+
+    amm CodeGeneration.sc write <filenName>
+
+*/
+
+import $file.Parser, Parser._
 
 // for generating new labels
 var counter = -1
@@ -34,23 +35,36 @@ implicit def string_inters(sc: StringContext) = new {
     def m(args: Any*): String = sc.s(args:_*) ++ "\n"
 }
 
-// NECESSARY TO IMPLEMENT: A WAY OF GETTING THE AMOUNT OF ELEMENTS IN THE STACK/ARRAY
-// A WAY OF ADDING AN ELEMENT AT THE END OF THE ARRAY
-// A WAY OF REMOVING THE LAST ELEMENT OF THE ARRAY
-// A WAY OF ACCESSING ANY ELEMENT OF THE ARRAY
-// A WAY OF MODIFYING ANY ELEMENT BASED ON ITS DISTANCE TO THE TOP OF THE STACK
-
 
 val prelude = """
 
-@.str = private constant [12 x i8] c"Output: %d\0A\00"
+; string template for a number
+@.str = private constant [4 x i8] c"%d \00"
+; string template for an ASCII character
+@.asciiStr = private constant [4 x i8] c"%c \00"
 
 declare i32 @printf(i8*, ...)
 
 define i32 @printInt(i32 %x) {
-   %t0 = getelementptr [12 x i8], [12 x i8]* @.str, i32 0, i32 0
-   call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
-   ret i32 %x
+  %t0 = getelementptr [4 x i8], [4 x i8]* @.str, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
+  ret i32 %x
+}
+
+define i32 @print_ASCII(i32 %x) {
+  %t0 = getelementptr [4 x i8], [4 x i8]* @.asciiStr, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
+  ret i32 %x
+}
+
+; store the newline as a string constant
+; more specifically as a constant array containing i8 integers
+@.nl = constant [2 x i8] c"\0A\00"
+
+define i32 @printNL() {
+  %castNL = getelementptr [2 x i8], [2 x i8]* @.nl, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %castNL)
+  ret i32 0
 }
 
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
@@ -218,7 +232,56 @@ def compile_prog(prog: List[Node]): String = prog match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
   }
   case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
+  case Loop(list) :: rest => {
+    val i_global = Fresh("i_global")
+    val i_local1 = Fresh("i_local1")
+    val i_local2 = Fresh("i_local2")
+    val i_local3 = Fresh("i_local3")
+    val isIGreater = Fresh("isIGreater")
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val entry = Fresh("entry")
+    val loop = Fresh("loop")
+    val finish = Fresh("finish")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${i_global} = alloca i32" ++
+    i"store i32 %${top}, i32* %${i_global}" ++
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${i_local1} = load i32, i32* %${i_global}" ++
+    i"%${isIGreater} = icmp sge i32 %${i_local1}, %${second}" ++
+    i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
+    l"${loop}" ++
+    compile_loop(list, i_global, finish) ++
+    //increment i_global
+    i"%${i_local2} = load i32, i32* %${i_global}" ++
+    i"%${i_local3} = add i32 1, %${i_local2}" ++
+    i"store i32 %${i_local3}, i32* %${i_global}" ++
+    i"br label %${entry}" ++
+    l"${finish}"
+  }
   case _ => ""
+}
+
+def compile_loop(loopRoutine: List[Node], i_global: String, finishLabel: String): String = loopRoutine match {
+  case Nil => ""
+  case Push(x) :: rest => {
+    i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ 
+    compile_loop(rest, i_global, finishLabel)
+  }
+  case Command("i") :: rest => {
+    val i_local = Fresh("i_local")
+    i"%${i_local} = load i32, i32* %${i_global}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${i_local})" ++
+    compile_loop(rest, i_global, finishLabel)
+  }
+  case Command("LEAVE") :: rest => {
+    i"br label %${finishLabel}" ++ compile_loop(rest, i_global, finishLabel)
+  }
+  case Command(x) :: rest => {
+    compile_command(x) ++ compile_loop(rest, i_global, finishLabel)
+  }
 }
 
 def compile_command(str: String): String = str match {
@@ -264,7 +327,7 @@ def compile_command(str: String): String = str match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${length})"
   }
   case "DROP" => {
-    val trashed = Fresh("trahed") 
+    val trashed = Fresh("trashed") 
     i"%${trashed} = call i32 @Stack_Pop(%stackType* %stack)"
   }
   case "2DROP" => {
@@ -325,7 +388,7 @@ def compile_command(str: String): String = str match {
     i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
   }
   case "SWAP" => {
@@ -346,7 +409,7 @@ def compile_command(str: String): String = str match {
     i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${fourth} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
   }
@@ -359,11 +422,11 @@ def compile_command(str: String): String = str match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++ 
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
   }
-  // case "EMIT" => {
-  //   val value = stack.head
-  //   print(s"""${value.toChar}""")
-  //   (defs, stack.tail)
-  // }
+  case "EMIT" => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call i32 @print_ASCII(i32 %${top})"
+  }
   case "ABS" => {
     val top = Fresh("top")
     val minustop = Fresh("minustop")
@@ -450,11 +513,12 @@ def compile_command(str: String): String = str match {
     i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${printTop} = call i32 @printInt(i32 %${top})"
   }
-  // case "CR" => {
-  //   println("")
-  //   (defs, stack)
+  case "CR" => {
+    i"call i32 @printNL()"
+  }
+  // case _ => {
+
   // }
-  case _ => ""
 }
 
 def compile(prog: List[Node]): String = {
@@ -479,6 +543,6 @@ def run(fname: String) = {
     write(fname)
     os.proc("llc", "-filetype=obj", file ++ ".ll").call()
     os.proc("lli", file ++ ".ll").call(stdout = os.Inherit)
-    println(s"done.")
+    println(s" ok")
 }
 

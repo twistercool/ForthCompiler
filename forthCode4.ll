@@ -1,13 +1,32 @@
 
 
-@.str = private constant [12 x i8] c"Output: %d\0A\00"
+; string template for a number
+@.str = private constant [4 x i8] c"%d \00"
+; string template for an ASCII character
+@.asciiStr = private constant [4 x i8] c"%c \00"
 
 declare i32 @printf(i8*, ...)
 
 define i32 @printInt(i32 %x) {
-   %t0 = getelementptr [12 x i8], [12 x i8]* @.str, i32 0, i32 0
-   call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
-   ret i32 %x
+  %t0 = getelementptr [4 x i8], [4 x i8]* @.str, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
+  ret i32 %x
+}
+
+define i32 @print_ASCII(i32 %x) {
+  %t0 = getelementptr [4 x i8], [4 x i8]* @.asciiStr, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
+  ret i32 %x
+}
+
+; store the newline as a string constant
+; more specifically as a constant array containing i8 integers
+@.nl = constant [2 x i8] c"\0A\00"
+
+define i32 @printNL() {
+  %castNL = getelementptr [2 x i8], [2 x i8]* @.nl, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %castNL)
+  ret i32 0
 }
 
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
@@ -145,26 +164,33 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
-  call void @Stack_PushInt(%stackType* %stack, i32 4)
-  call void @Stack_PushInt(%stackType* %stack, i32 -12)
-  call void @Stack_PushInt(%stackType* %stack, i32 5)
-  br label %entry_3
-entry_3:
-  %top_0 = call i32 @Stack_Pop(%stackType* %stack)
-  %second_1 = call i32 @Stack_Pop(%stackType* %stack)
-  %isSmaller_2 = icmp sle i32 %top_0, %second_1
-  br i1 %isSmaller_2, label %topsmaller_4, label %secondsmaller_5
-topsmaller_4:
-  call void @Stack_PushInt(%stackType* %stack, i32 %top_0)
-  br label %finish_6
-secondsmaller_5:
-  call void @Stack_PushInt(%stackType* %stack, i32 %second_1)
-  br label %finish_6
-finish_6:
-  %top_7 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_8 = call i32 @printInt(i32 %top_7)
-  %top_9 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_10 = call i32 @printInt(i32 %top_9)
+  call void @Stack_PushInt(%stackType* %stack, i32 10)
+  call void @Stack_PushInt(%stackType* %stack, i32 0)
+  %top_5 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_6 = call i32 @Stack_Pop(%stackType* %stack)
+  %i_global_0 = alloca i32
+  store i32 %top_5, i32* %i_global_0
+  br label %entry_7
+entry_7:
+  %i_local1_1 = load i32, i32* %i_global_0
+  %isIGreater_4 = icmp sge i32 %i_local1_1, %second_6
+  br i1 %isIGreater_4, label %finish_9, label %loop_8
+loop_8:
+  %i_local_10 = load i32, i32* %i_global_0
+  call void @Stack_PushInt(%stackType* %stack, i32 %i_local_10)
+  call void @Stack_PushInt(%stackType* %stack, i32 10)
+  %top_11 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_12 = call i32 @Stack_Pop(%stackType* %stack)
+  %subvalue_13 = sub i32 %second_12, %top_11
+  call void @Stack_PushInt(%stackType* %stack, i32 %subvalue_13)
+  br label %finish_9
+  %top_14 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_15 = call i32 @printInt(i32 %top_14)
+  %i_local2_2 = load i32, i32* %i_global_0
+  %i_local3_3 = add i32 1, %i_local2_2
+  store i32 %i_local3_3, i32* %i_global_0
+  br label %entry_7
+finish_9:
 
 
   ;%a = call i32 @Stack_Pop(%stackType* %stack)
