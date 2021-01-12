@@ -14,5 +14,3 @@ You can also compile the code to LLVM-IR and get a .ll file with the command:
   
 Finally, to compile and run a Forth file, use the following command:
   amm CodeGeneration.sc run <filename>
-  
-Code generation is not final and can't run much yet, please use the interpreter while I continue with the development.
