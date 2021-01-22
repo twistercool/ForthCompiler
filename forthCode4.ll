@@ -122,25 +122,69 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
+  call void @Stack_PushInt(%stackType* %stack, i32 11)
   call void @Stack_PushInt(%stackType* %stack, i32 1)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  %Length_0 = call i32 @Stack_GetLength(%stackType* %stack)
-  call void @Stack_PushInt(%stackType* %stack, i32 %Length_0)
-  %top_1 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_2 = call i32 @printInt(i32 %top_1)
-  %top_3 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_4 = call i32 @printInt(i32 %top_3)
   %top_5 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_6 = call i32 @printInt(i32 %top_5)
-  %top_7 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_8 = call i32 @printInt(i32 %top_7)
-  %top_9 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_10 = call i32 @printInt(i32 %top_9)
+  %second_6 = call i32 @Stack_Pop(%stackType* %stack)
+  %i_global_0 = alloca i32
+  store i32 %top_5, i32* %i_global_0
+  br label %entry_7
+entry_7:
+  %i_local1_1 = load i32, i32* %i_global_0
+  %isIGreater_4 = icmp sge i32 %i_local1_1, %second_6
+  br i1 %isIGreater_4, label %finish_9, label %loop_8
+loop_8:
+  %i_local_10 = load i32, i32* %i_global_0
+  call void @Stack_PushInt(%stackType* %stack, i32 %i_local_10)
   %top_11 = call i32 @Stack_Pop(%stackType* %stack)
   %printTop_12 = call i32 @printInt(i32 %top_11)
+  call void @Stack_PushInt(%stackType* %stack, i32 11)
+  call void @Stack_PushInt(%stackType* %stack, i32 1)
+  %top_18 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_19 = call i32 @Stack_Pop(%stackType* %stack)
+  %newIndex_global_13 = alloca i32
+  store i32 %top_18, i32* %newIndex_global_13
+  br label %entry_20
+entry_20:
+  %newIndex_local1_14 = load i32, i32* %newIndex_global_13
+  %isIGreater_17 = icmp sge i32 %newIndex_local1_14, %second_19
+  br i1 %isIGreater_17, label %finish_22, label %loop_21
+loop_21:
+  %j_local_23 = load i32, i32* %i_global_0
+  call void @Stack_PushInt(%stackType* %stack, i32 %j_local_23)
+  %top_24 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_25 = call i32 @printInt(i32 %top_24)
+  call void @Stack_PushInt(%stackType* %stack, i32 11)
+  call void @Stack_PushInt(%stackType* %stack, i32 1)
+  %top_31 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_32 = call i32 @Stack_Pop(%stackType* %stack)
+  %newIndex_global_26 = alloca i32
+  store i32 %top_31, i32* %newIndex_global_26
+  br label %entry_33
+entry_33:
+  %newIndex_local1_27 = load i32, i32* %newIndex_global_26
+  %isIGreater_30 = icmp sge i32 %newIndex_local1_27, %second_32
+  br i1 %isIGreater_30, label %finish_35, label %loop_34
+loop_34:
+  %i_local_36 = load i32, i32* %newIndex_global_26
+  call void @Stack_PushInt(%stackType* %stack, i32 %i_local_36)
+  %top_37 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_38 = call i32 @printInt(i32 %top_37)
+  %newIndex_local2_28 = load i32, i32* %newIndex_global_26
+  %newIndex_local3_29 = add i32 1, %newIndex_local2_28
+  store i32 %newIndex_local3_29, i32* %newIndex_global_26
+  br label %entry_33
+finish_35:
+  %newIndex_local2_15 = load i32, i32* %newIndex_global_13
+  %newIndex_local3_16 = add i32 1, %newIndex_local2_15
+  store i32 %newIndex_local3_16, i32* %newIndex_global_13
+  br label %entry_20
+finish_22:
+  %i_local2_2 = load i32, i32* %i_global_0
+  %i_local3_3 = add i32 1, %i_local2_2
+  store i32 %i_local3_3, i32* %i_global_0
+  br label %entry_7
+finish_9:
 
   ret i32 0
 }

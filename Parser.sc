@@ -16,7 +16,7 @@ abstract class Node
 case class Push(value: Int) extends Node
 case class Command(cmd: String) extends Node
 case class Define(id: Command, subroutine: List[Node]) extends Node
-case class Loop(subroutine: List[Node]) extends Node
+case class Loop(subroutine: List[Node], nested: Int) extends Node
 
 def command[_: P] = P(
                     ("DEPTH"|"DROP"|"2DROP"|"3DROP"|"DUP"|"2DUP"|"3DUP"|"OVER"|"2OVER"|
@@ -35,23 +35,43 @@ def white[_: P] = P(
     (CharIn(" \r\n\t")).rep(1)
 )
 def idParser[_: P] = P(
-    (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!.map{x => Command(x)}
+    !"LOOP" ~ !"THEN" ~ (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!.map{ x => Command(x) }
 )
 
 def definition[_: P] = P(
     (":" ~ white ~ idParser ~ subroutine ~ ";")
     .map{ case (x, y) => Define(x, y.asInstanceOf[List[Node]]) }
 )
-def subroutine[_:P] = P(
-    ((comment | number | loop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ())}
-)
-def looproutine[_:P] = P(
-    ((!"LOOP" ~ (comment | number | command | white | idParser)).rep(1)).map{ x => x.filter(_ != ())}
+def subroutine[_: P] = P(
+    ((comment | number | loop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
 )
 def loop[_: P] = P(
     ("DO" ~ white ~ looproutine ~ "LOOP")
-    .map{ x => Loop(x.asInstanceOf[List[Node]]) }
+    .map{ x => Loop(x.asInstanceOf[List[Node]], 0) }
 )
+def looproutine[_: P] = P(
+    ((comment | number | nestedloop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
+)
+def nestedloop[_: P] = P(
+    ("DO" ~ white ~ nestedlooproutine ~ "LOOP")
+    .map{ x => Loop(x.asInstanceOf[List[Node]], 1) }
+)
+def nestedlooproutine[_: P] = P(
+    ((comment | number | doublenestedloop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
+)
+def doublenestedloop[_: P] = P(
+    ("DO" ~ white ~ doublenestedlooproutine ~ "LOOP")
+    .map{ x => Loop(x.asInstanceOf[List[Node]], 2) }
+)
+def doublenestedlooproutine[_: P] = P(
+    ((comment | number | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
+)
+// def if_then[_: P] = P(
+//     ("IF" ~ ifroutine )
+// )
+// def ifroutine[_:P] = P(
+//     ((!"THEN" ~ (comment | number | command | white | idParser)).rep(1)).map{ x => x.filter(_ != ()) }
+// )
 def program[_: P] = P(
     ((definition | comment | white | number | subroutine).rep).map{ x => x.filter(_ != ())}
 )

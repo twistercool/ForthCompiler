@@ -188,7 +188,7 @@ def compile_prog(prog: List[Node]): String = prog match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
   }
   case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
-  case Loop(list) :: rest => {
+  case Loop(list, 0) :: rest => {
     val i_global = Fresh("i_global")
     val i_local1 = Fresh("i_local1")
     val i_local2 = Fresh("i_local2")
@@ -209,7 +209,7 @@ def compile_prog(prog: List[Node]): String = prog match {
     i"%${isIGreater} = icmp sge i32 %${i_local1}, %${second}" ++
     i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
     l"${loop}" ++
-    compile_loop(list, i_global, finish) ++
+    compile_loop(list, i_global, "", finish) ++
     //increment i_global
     i"%${i_local2} = load i32, i32* %${i_global}" ++
     i"%${i_local3} = add i32 1, %${i_local2}" ++
@@ -221,23 +221,60 @@ def compile_prog(prog: List[Node]): String = prog match {
   case Define(x, y) :: rest => compile_prog(rest)
 }
 
-def compile_loop(loopRoutine: List[Node], i_global: String, finishLabel: String): String = loopRoutine match {
+def compile_loop(loopRoutine: List[Node], innerIndexString: String,
+  outerIndexString: String, finishLabel: String): String = loopRoutine match {
   case Nil => ""
   case Push(x) :: rest => {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ 
-    compile_loop(rest, i_global, finishLabel)
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("i") :: rest => {
     val i_local = Fresh("i_local")
-    i"%${i_local} = load i32, i32* %${i_global}" ++
+    i"%${i_local} = load i32, i32* %${innerIndexString}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${i_local})" ++
-    compile_loop(rest, i_global, finishLabel)
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
+  case Command("j") :: rest => {
+    val j_local = Fresh("j_local")
+    i"%${j_local} = load i32, i32* %${outerIndexString}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${j_local})" ++
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("LEAVE") :: rest => {
-    i"br label %${finishLabel}" ++ compile_loop(rest, i_global, finishLabel)
+    i"br label %${finishLabel}" ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command(x) :: rest => {
-    compile_command(x) ++ compile_loop(rest, i_global, finishLabel)
+    compile_command(x) ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
+  case Loop(list, _) :: rest => {
+    val newIndex_global = Fresh("newIndex_global")
+    val newIndex_local1 = Fresh("newIndex_local1")
+    val newIndex_local2 = Fresh("newIndex_local2")
+    val newIndex_local3 = Fresh("newIndex_local3")
+    val isIGreater = Fresh("isIGreater")
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val entry = Fresh("entry")
+    val loop = Fresh("loop")
+    val finish = Fresh("finish")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${newIndex_global} = alloca i32" ++
+    i"store i32 %${top}, i32* %${newIndex_global}" ++
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${newIndex_local1} = load i32, i32* %${newIndex_global}" ++
+    i"%${isIGreater} = icmp sge i32 %${newIndex_local1}, %${second}" ++
+    i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
+    l"${loop}" ++
+    compile_loop(list, newIndex_global, innerIndexString, finish) ++
+    //increment newIndex_global
+    i"%${newIndex_local2} = load i32, i32* %${newIndex_global}" ++
+    i"%${newIndex_local3} = add i32 1, %${newIndex_local2}" ++
+    i"store i32 %${newIndex_local3}, i32* %${newIndex_global}" ++
+    i"br label %${entry}" ++
+    l"${finish}" ++
+    compile_prog(rest)
   }
 }
 
