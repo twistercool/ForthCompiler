@@ -277,6 +277,9 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     l"${finish}" ++
     compile_prog(rest)
   }
+  // case IfElse(a, b) :: rest => {
+    // ""
+  // }
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
 
@@ -517,6 +520,156 @@ def compile_command(str: String): String = str match {
   }
   case "CR" => {
     i"call i32 @printNL()"
+  }
+  case "0=" => {
+    val top = Fresh("top")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val equal_to_0 = Fresh("equal_to_0")
+    val push_false = Fresh("push_false") 
+    val push_true = Fresh("push_true")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${equal_to_0} = icmp eq i32 %${top}, 0" ++
+    i"br i1 %${equal_to_0}, label %${push_true}, label %${push_false}" ++
+    l"${push_true}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${push_false}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "0<" => {
+    val top = Fresh("top")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val less_than_0 = Fresh("less_than_0")
+    val push_false = Fresh("push_false") 
+    val push_true = Fresh("push_true")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${less_than_0} = icmp slt i32 %${top}, 0" ++
+    i"br i1 %${less_than_0}, label %${push_true}, label %${push_false}" ++
+    l"${push_true}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${push_false}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "0>" => {
+    val top = Fresh("top")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val more_than_0 = Fresh("more_than_0")
+    val push_false = Fresh("push_false") 
+    val push_true = Fresh("push_true")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${more_than_0} = icmp sgt i32 %${top}, 0" ++
+    i"br i1 %${more_than_0}, label %${push_true}, label %${push_false}" ++
+    l"${push_true}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${push_false}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "0<>" => {
+    val top = Fresh("top")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val different_than_0 = Fresh("different_than_0")
+    val push_false = Fresh("push_false") 
+    val push_true = Fresh("push_true")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${different_than_0} = icmp ne i32 %${top}, 0" ++
+    i"br i1 %${different_than_0}, label %${push_true}, label %${push_false}" ++
+    l"${push_true}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${push_false}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "<" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val topsmaller = Fresh("topsmaller")
+    val secondsmaller = Fresh("secondsmaller")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp sle i32 %${top}, %${second}" ++
+    i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
+    l"${topsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${secondsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case ">" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val topsmaller = Fresh("topsmaller")
+    val secondsmaller = Fresh("secondsmaller")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp slt i32 %${top}, %${second}" ++
+    i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
+    l"${topsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${secondsmaller}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
+  case "<>" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isEqual = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val equal = Fresh("equal")
+    val unequal = Fresh("unequal")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isEqual} = icmp eq i32 %${top}, %${second}" ++
+    i"br i1 %${isEqual}, label %${equal}, label %${unequal}" ++
+    l"${equal}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${unequal}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
   }
   case cmd => {
     i"call void @Stack_Function_${cmd}(%stackType* %stack)"

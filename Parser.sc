@@ -23,7 +23,7 @@ case object Whitespace extends Node
 
 def command[_: P]: P[Command] = P(
                     ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|".").!.map{ str => Command(str) } | 
-                    ("0<>"|"<"|"<>"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
+                    ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ case (x, y) => Push(x.toInt) }
@@ -52,7 +52,8 @@ def loop[_: P]: P[Loop] = P(
         .map{ case (w, x) => Loop(x) }
 )
 def ifNoElse[_: P]: P[IfElse] = P(
-    ("IF" ~ white ~/ subroutine ~ "THEN").map{ case (w, x) => IfElse(x, List()) }
+    ("IF" ~ white ~/ subroutine ~ "THEN").map{ case (w, x) => IfElse(x, List()) } |
+    ("IF" ~ white ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN").map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
     (definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
@@ -64,7 +65,7 @@ def program[_: P]: P[List[Node]] = P(
 def tree(input: String): List[Node] = {
     (parse(input, program(_)) match {
         case Parsed.Success(list, nb) => list
-    }).filter({case Comment => false case Whitespace => false case _ => true})
+    })
 }
 
 
