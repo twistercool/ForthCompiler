@@ -188,7 +188,7 @@ def compile_prog(prog: List[Node]): String = prog match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
   }
   case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
-  case Loop(list, 0) :: rest => {
+  case Loop(list) :: rest => {
     val i_global = Fresh("i_global")
     val i_local1 = Fresh("i_local1")
     val i_local2 = Fresh("i_local2")
@@ -219,6 +219,7 @@ def compile_prog(prog: List[Node]): String = prog match {
     compile_prog(rest)
   }
   case Define(x, y) :: rest => compile_prog(rest)
+  case _ :: rest => compile_prog(rest)
 }
 
 def compile_loop(loopRoutine: List[Node], innerIndexString: String,
@@ -246,7 +247,7 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
   case Command(x) :: rest => {
     compile_command(x) ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
-  case Loop(list, _) :: rest => {
+  case Loop(list) :: rest => {
     val newIndex_global = Fresh("newIndex_global")
     val newIndex_local1 = Fresh("newIndex_local1")
     val newIndex_local2 = Fresh("newIndex_local2")
@@ -276,6 +277,7 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     l"${finish}" ++
     compile_prog(rest)
   }
+  case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
 
 def compile_command(str: String): String = str match {

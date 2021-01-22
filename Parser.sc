@@ -1,4 +1,4 @@
-/*  Author: Pierre Brasasrt
+/*  Author: Pierre Brassart
 
     This the code of the Compiler Project.
     This file creates an Abstract Syntax Tree for Forth Code.
@@ -16,80 +16,55 @@ abstract class Node
 case class Push(value: Int) extends Node
 case class Command(cmd: String) extends Node
 case class Define(id: Command, subroutine: List[Node]) extends Node
-case class Loop(subroutine: List[Node], nested: Int) extends Node
+case class Loop(subroutine: List[Node]) extends Node
+case class IfElse(trueSubroutine: List[Node], falseSubroutine: List[Node]) extends Node
+case object Comment extends Node
+case object Whitespace extends Node
 
-def command[_: P] = P(
-                    ("DEPTH"|"DROP"|"2DROP"|"3DROP"|"DUP"|"2DUP"|"3DUP"|"OVER"|"2OVER"|
-                    "ROT"|"-ROT"|"SWAP"|"2SWAP"|"TUCK"|
-                    "+"|"-"|"*"|"/"|"EMIT"|"ABS"|"MAX"|"MIN"|"MOD"|
-                    "*/MOD"|"/MOD"|"NEGATE"|"."|"CR").!.map{ str => Command(str) }
+def command[_: P]: P[Command] = P(
+                    ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|".").!.map{ str => Command(str) } | 
+                    ("0<>"|"<"|"<>"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
 )
-def number[_: P] = P(
-    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ x => Push(x.toInt) }
-    | "0".!.map{ x => Push(x.toInt) }
+def number[_: P]: P[Push] = P(
+    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ case (x, y) => Push(x.toInt) }
+    | ("0" ~ white).map{ x => Push(0) }
 )
-def comment[_: P] = P( ("(" ~ (!")" ~ AnyChar).rep ~ ")") | 
-    ("\\" ~ (!"\n" ~ !"\r\n" ~ AnyChar).rep)
+def comment[_: P]: P[Node] = P((("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
+    ("\\" ~ (!("\n" | "\r\n") ~ AnyChar).rep))
+        .map{ _ => Comment }
 )
-def white[_: P] = P(
-    (CharIn(" \r\n\t")).rep(1)
+def white[_: P]: P[Node] = P(
+    (CharIn(" \r\n\t")).rep(1).map{ _ => Whitespace }
 )
-def idParser[_: P] = P(
-    !"LOOP" ~ !"THEN" ~ (CharIn("a-zA-Z") ~ CharIn("a-zA-Z0-9_").rep).!.map{ x => Command(x) }
+def idParser[_: P]: P[Command] = P(
+    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("a-zA-Z0-9_").rep(1)).!.map{ x => Command(x) }
+)
+def definition[_: P]: P[Define] = P(
+    (":" ~ white ~/ idParser ~ subroutine ~ ";")
+    .map{ case (w, x, y) => Define(x, y) }
+)
+def subroutine[_: P]: P[List[Node]] = P(
+    ((comment | number | loop | command | white | idParser).rep(1))
+        .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
+)
+def loop[_: P]: P[Loop] = P(
+    ("DO" ~ white ~/ subroutine ~ "LOOP")
+        .map{ case (w, x) => Loop(x) }
+)
+def ifNoElse[_: P]: P[IfElse] = P(
+    ("IF" ~ white ~/ subroutine ~ "THEN").map{ case (w, x) => IfElse(x, List()) }
+)
+def program[_: P]: P[List[Node]] = P(
+    (definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
+        .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 
-def definition[_: P] = P(
-    (":" ~ white ~ idParser ~ subroutine ~ ";")
-    .map{ case (x, y) => Define(x, y.asInstanceOf[List[Node]]) }
-)
-def subroutine[_: P] = P(
-    ((comment | number | loop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
-)
-def loop[_: P] = P(
-    ("DO" ~ white ~ looproutine ~ "LOOP")
-    .map{ x => Loop(x.asInstanceOf[List[Node]], 0) }
-)
-def looproutine[_: P] = P(
-    ((comment | number | nestedloop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
-)
-def nestedloop[_: P] = P(
-    ("DO" ~ white ~ nestedlooproutine ~ "LOOP")
-    .map{ x => Loop(x.asInstanceOf[List[Node]], 1) }
-)
-def nestedlooproutine[_: P] = P(
-    ((comment | number | doublenestedloop | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
-)
-def doublenestedloop[_: P] = P(
-    ("DO" ~ white ~ doublenestedlooproutine ~ "LOOP")
-    .map{ x => Loop(x.asInstanceOf[List[Node]], 2) }
-)
-def doublenestedlooproutine[_: P] = P(
-    ((comment | number | command | white | idParser).rep(1)).map{ x => x.filter(_ != ()) }
-)
-// def if_then[_: P] = P(
-//     ("IF" ~ ifroutine )
-// )
-// def ifroutine[_:P] = P(
-//     ((!"THEN" ~ (comment | number | command | white | idParser)).rep(1)).map{ x => x.filter(_ != ()) }
-// )
-def program[_: P] = P(
-    ((definition | comment | white | number | subroutine).rep).map{ x => x.filter(_ != ())}
-)
-           
 
-//function to flatten a list of lists, since .flatten doesn't work
-def f[U](l: List[U]): List[U] = l match { 
-  case Nil => Nil
-  case Nil :: tail => f(tail)
-  case (x: List[U]) :: tail => f(x) ::: f(tail)
-  case x :: tail => x :: f(tail)
-}
 
 def tree(input: String): List[Node] = {
-    val parsed = parse(input, program(_)) match {
+    (parse(input, program(_)) match {
         case Parsed.Success(list, nb) => list
-    }
-    f(parsed.asInstanceOf[List[Node]]) //f is to flatten
+    }).filter({case Comment => false case Whitespace => false case _ => true})
 }
 
 
