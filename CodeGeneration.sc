@@ -156,6 +156,8 @@ define i32 @main(i32 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
+  %return_stack = alloca %stackType
+  call void @Stack_Create_Empty(%stackType* %return_stack)
 
 
   ; COMPILED CODE STARTS HERE
@@ -171,7 +173,7 @@ val ending = """
 def compile_definitions(prog: List[Node]): String = prog match {
   case Nil => ""
   case Define(Command(id), list) :: rest => {
-    m"\ndefine void @Stack_Function_${id}(%stackType* %stack) nounwind" ++
+    m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
     m"{" ++
     compile_prog(list) ++
     i"ret void" ++
@@ -707,8 +709,24 @@ def compile_command(str: String): String = str match {
     i"br label %${finish}" ++
     l"${finish}"
   }
+  case ">R" => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %return_stack, i32 %${top})"
+  }
+  case "R>" => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %return_stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+  }
+  case "R@" => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %return_stack)" ++
+    i"call void @Stack_PushInt(%stackType* %return_stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+  }
   case cmd => {
-    i"call void @Stack_Function_${cmd}(%stackType* %stack)"
+    i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
   }
 }
 

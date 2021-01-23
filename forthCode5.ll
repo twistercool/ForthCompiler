@@ -112,63 +112,63 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ret i32 %popped
 }
 
+define void @Stack_Function_QUADRATIC(%stackType* %stack, %stackType* %return_stack) nounwind
+{
+  %top_0 = call i32 @Stack_Pop(%stackType* %stack)
+  call void @Stack_PushInt(%stackType* %return_stack, i32 %top_0)
+  %top_1 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_2 = call i32 @Stack_Pop(%stackType* %stack)
+  call void @Stack_PushInt(%stackType* %stack, i32 %top_1)
+  call void @Stack_PushInt(%stackType* %stack, i32 %second_2)
+  %top_3 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_4 = call i32 @Stack_Pop(%stackType* %stack)
+  %third_5 = call i32 @Stack_Pop(%stackType* %stack)
+  call void @Stack_PushInt(%stackType* %stack, i32 %second_4)
+  call void @Stack_PushInt(%stackType* %stack, i32 %top_3)
+  call void @Stack_PushInt(%stackType* %stack, i32 %third_5)
+  %top_6 = call i32 @Stack_Pop(%stackType* %return_stack)
+  call void @Stack_PushInt(%stackType* %return_stack, i32 %top_6)
+  call void @Stack_PushInt(%stackType* %stack, i32 %top_6)
+  %top_7 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_8 = call i32 @Stack_Pop(%stackType* %stack)
+  %product_9 = mul i32 %second_8, %top_7
+  call void @Stack_PushInt(%stackType* %stack, i32 %product_9)
+  %top_10 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_11 = call i32 @Stack_Pop(%stackType* %stack)
+  %added_12 = add i32 %second_11, %top_10
+  call void @Stack_PushInt(%stackType* %stack, i32 %added_12)
+  %top_13 = call i32 @Stack_Pop(%stackType* %return_stack)
+  call void @Stack_PushInt(%stackType* %stack, i32 %top_13)
+  %top_14 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_15 = call i32 @Stack_Pop(%stackType* %stack)
+  %product_16 = mul i32 %second_15, %top_14
+  call void @Stack_PushInt(%stackType* %stack, i32 %product_16)
+  %top_17 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_18 = call i32 @Stack_Pop(%stackType* %stack)
+  %added_19 = add i32 %second_18, %top_17
+  call void @Stack_PushInt(%stackType* %stack, i32 %added_19)
+  ret void
+}
+
 
 define i32 @main(i32 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
+  %return_stack = alloca %stackType
+  call void @Stack_Create_Empty(%stackType* %return_stack)
 
 
   ; COMPILED CODE STARTS HERE
 
 
-  call void @Stack_PushInt(%stackType* %stack, i32 11)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  %top_5 = call i32 @Stack_Pop(%stackType* %stack)
-  %second_6 = call i32 @Stack_Pop(%stackType* %stack)
-  %i_global_0 = alloca i32
-  store i32 %top_5, i32* %i_global_0
-  br label %entry_7
-entry_7:
-  %i_local1_1 = load i32, i32* %i_global_0
-  %isIGreater_4 = icmp sge i32 %i_local1_1, %second_6
-  br i1 %isIGreater_4, label %finish_9, label %loop_8
-loop_8:
-  %i_local_10 = load i32, i32* %i_global_0
-  call void @Stack_PushInt(%stackType* %stack, i32 %i_local_10)
-  call void @Stack_PushInt(%stackType* %stack, i32 5)
-  br label %entry_14
-entry_14:
-  %top_11 = call i32 @Stack_Pop(%stackType* %stack)
-  %second_12 = call i32 @Stack_Pop(%stackType* %stack)
-  %isSmaller_13 = icmp sle i32 %top_11, %second_12
-  br i1 %isSmaller_13, label %topsmaller_15, label %secondsmaller_16
-topsmaller_15:
-  call void @Stack_PushInt(%stackType* %stack, i32 0)
-  br label %finish_17
-secondsmaller_16:
-  call void @Stack_PushInt(%stackType* %stack, i32 -1)
-  br label %finish_17
-finish_17:
-  %top_21 = call i32 @Stack_Pop(%stackType* %stack)
-  %isZero_20 = icmp eq i32 %top_21, 0
-  br i1 %isZero_20, label %else_block_19, label %if_block_18
-if_block_18:
-  call void @Stack_PushInt(%stackType* %stack, i32 20)
-  %top_23 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_24 = call i32 @printInt(i32 %top_23)
-  br label %if_exit_22
-else_block_19:
-  call void @Stack_PushInt(%stackType* %stack, i32 30)
-  %top_25 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_26 = call i32 @printInt(i32 %top_25)
-  br label %if_exit_22
-if_exit_22:
-  %i_local2_2 = load i32, i32* %i_global_0
-  %i_local3_3 = add i32 1, %i_local2_2
-  store i32 %i_local3_3, i32* %i_global_0
-  br label %entry_7
-finish_9:
+  call void @Stack_PushInt(%stackType* %stack, i32 2)
+  call void @Stack_PushInt(%stackType* %stack, i32 7)
+  call void @Stack_PushInt(%stackType* %stack, i32 9)
+  call void @Stack_PushInt(%stackType* %stack, i32 3)
+  call void @Stack_Function_QUADRATIC(%stackType* %stack, %stackType* %return_stack)
+  %top_20 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_21 = call i32 @printInt(i32 %top_20)
 
   ret i32 0
 }

@@ -23,6 +23,7 @@ case object Whitespace extends Node
 
 def command[_: P]: P[Command] = P(
                     ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|".").!.map{ str => Command(str) } | 
+                    (">R"|"R>"|"R@").!.map{ str => Command(str) } |
                     ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
