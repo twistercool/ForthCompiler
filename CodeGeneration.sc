@@ -219,6 +219,10 @@ def compile_prog(prog: List[Node]): String = prog match {
     compile_prog(rest)
   }
   case Define(x, y) :: rest => compile_prog(rest)
+  // case IfElse(a, b) :: rest => {
+  //   val if_entry = Fresh("if_entry")
+
+  // }
   case _ :: rest => compile_prog(rest)
 }
 
@@ -229,13 +233,13 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ 
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
-  case Command("i") :: rest => {
+  case Command("I") :: rest => {
     val i_local = Fresh("i_local")
     i"%${i_local} = load i32, i32* %${innerIndexString}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${i_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
-  case Command("j") :: rest => {
+  case Command("J") :: rest => {
     val j_local = Fresh("j_local")
     i"%${j_local} = load i32, i32* %${outerIndexString}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${j_local})" ++

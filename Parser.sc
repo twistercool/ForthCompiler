@@ -63,7 +63,7 @@ def program[_: P]: P[List[Node]] = P(
 
 
 def tree(input: String): List[Node] = {
-    (parse(input, program(_)) match {
+    (parse(input.toUpperCase, program(_)) match {
         case Parsed.Success(list, nb) => list
     })
 }
