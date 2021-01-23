@@ -37,7 +37,7 @@ def white[_: P]: P[Node] = P(
     (CharIn(" \r\n\t")).rep(1).map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("a-zA-Z0-9_").rep(1)).!.map{ x => Command(x) }
+    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("A-Z0-9_").rep(1)).!.map{ x => Command(x) }
 )
 def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")

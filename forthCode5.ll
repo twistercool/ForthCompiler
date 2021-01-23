@@ -112,16 +112,8 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ret i32 %popped
 }
 
-
-define i32 @main(i32 %argc, i8** %argv) {
-  ; uses the 
-  %stack = alloca %stackType
-  call void @Stack_Create_Empty(%stackType* %stack)
-
-
-  ; COMPILED CODE STARTS HERE
-
-
+define void @Stack_Function_DAB(%stackType* %stack) nounwind
+{
   call void @Stack_PushInt(%stackType* %stack, i32 5)
   call void @Stack_PushInt(%stackType* %stack, i32 1)
   %top_5 = call i32 @Stack_Pop(%stackType* %stack)
@@ -194,6 +186,37 @@ finish_19:
   store i32 %i_local3_3, i32* %i_global_0
   br label %entry_7
 finish_9:
+  ret void
+}
+
+
+define i32 @main(i32 %argc, i8** %argv) {
+  ; uses the 
+  %stack = alloca %stackType
+  call void @Stack_Create_Empty(%stackType* %stack)
+
+
+  ; COMPILED CODE STARTS HERE
+
+
+  call void @Stack_PushInt(%stackType* %stack, i32 5)
+  call void @Stack_PushInt(%stackType* %stack, i32 1)
+  %top_48 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_49 = call i32 @Stack_Pop(%stackType* %stack)
+  %i_global_43 = alloca i32
+  store i32 %top_48, i32* %i_global_43
+  br label %entry_50
+entry_50:
+  %i_local1_44 = load i32, i32* %i_global_43
+  %isIGreater_47 = icmp sge i32 %i_local1_44, %second_49
+  br i1 %isIGreater_47, label %finish_52, label %loop_51
+loop_51:
+  call void @Stack_Function_DAB(%stackType* %stack)
+  %i_local2_45 = load i32, i32* %i_global_43
+  %i_local3_46 = add i32 1, %i_local2_45
+  store i32 %i_local3_46, i32* %i_global_43
+  br label %entry_50
+finish_52:
 
   ret i32 0
 }
