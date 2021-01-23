@@ -26,22 +26,27 @@ def command[_: P]: P[Command] = P(
                     ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
-    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white ).map{ case (x, y) => Push(x.toInt) }
-    | ("0" ~ white).map{ x => Push(0) }
+    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
+        .map{ case (x, y) => Push(x.toInt) } | 
+    ("0" ~ white)
+        .map{ x => Push(0) }
 )
-def comment[_: P]: P[Node] = P((("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
+def comment[_: P]: P[Node] = P(
+    (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
     ("\\" ~ (!("\n" | "\r\n") ~ AnyChar).rep))
         .map{ _ => Comment }
 )
 def white[_: P]: P[Node] = P(
-    (CharIn(" \r\n\t")).rep(1).map{ _ => Whitespace }
+    (CharIn(" \r\n\t")).rep(1)
+        .map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("A-Z0-9_").rep(1)).!.map{ x => Command(x) }
+    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("A-Z0-9_").rep(1)).!
+        .map{ x => Command(x) }
 )
 def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")
-    .map{ case (w, x, y) => Define(x, y) }
+        .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Node]] = P(
     ((comment | number | loop | command | white | idParser).rep(1))
@@ -52,8 +57,10 @@ def loop[_: P]: P[Loop] = P(
         .map{ case (w, x) => Loop(x) }
 )
 def ifNoElse[_: P]: P[IfElse] = P(
-    ("IF" ~ white ~/ subroutine ~ "THEN").map{ case (w, x) => IfElse(x, List()) } |
-    ("IF" ~ white ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN").map{ case (w, x, y) => IfElse(x, y) }
+    ("IF" ~ white ~ subroutine ~ "THEN")
+        .map{ case (w, x) => IfElse(x, List()) } |
+    ("IF" ~ white ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
+        .map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
     (definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
@@ -61,11 +68,18 @@ def program[_: P]: P[List[Node]] = P(
 )
 
 
-
+// This function takes as input a string, changes all the lower case letters to upper case,
+// and attempts to parse it with the grammar defined above. If it fails, it prints an error message,
+// else, it returns the parsed input as a list of nodes
 def tree(input: String): List[Node] = {
-    (parse(input.toUpperCase, program(_)) match {
+    parse(input.toUpperCase, program(_)) match {
         case Parsed.Success(list, nb) => list
-    })
+        case Parsed.Failure(list, nb, extra) => {
+            println(s"parsing error at line ${nb}")
+            println(Parsed.Failure(list, nb, extra))
+            List()
+        }
+    }
 }
 
 

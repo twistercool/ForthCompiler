@@ -199,6 +199,7 @@ def compile_prog(prog: List[Node]): String = prog match {
     val entry = Fresh("entry")
     val loop = Fresh("loop")
     val finish = Fresh("finish")
+
     i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
     i"%${i_global} = alloca i32" ++
@@ -219,10 +220,26 @@ def compile_prog(prog: List[Node]): String = prog match {
     compile_prog(rest)
   }
   case Define(x, y) :: rest => compile_prog(rest)
-  // case IfElse(a, b) :: rest => {
-  //   val if_entry = Fresh("if_entry")
+  case IfElse(a, b) :: rest => {
+    val if_block = Fresh("if_block")
+    val else_block = Fresh("else_block")
+    val isZero = Fresh("isZero")
+    val top = Fresh("top")
+    val if_exit = Fresh("if_exit")
+    
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isZero} = icmp eq i32 %${top}, 0" ++
+    i"br i1 %${isZero}, label %${else_block}, label %${if_block}" ++
+    l"${if_block}" ++
+    compile_prog(a) ++
+    i"br label %${if_exit}" ++
+    l"${else_block}" ++
+    compile_prog(b) ++
+    i"br label %${if_exit}" ++
+    l"${if_exit}" ++
+    compile_prog(rest)
 
-  // }
+  }
   case _ :: rest => compile_prog(rest)
 }
 
