@@ -49,7 +49,7 @@ def definition[_: P]: P[Define] = P(
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Node]] = P(
-    ((comment | number | loop | command | white | idParser).rep(1))
+    ((comment | number | loop | command | white | idParser | ifNoElse).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
