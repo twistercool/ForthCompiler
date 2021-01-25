@@ -71,7 +71,10 @@ define i32 @printNL()
 }
 
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
-%stackType = type { i32, [100 x i32] }
+%stackType = type { 
+  i32, ; 0: holds the current length of the stack, or the amount of elements in it 
+  [100 x i32] ; 1: an array of the elements  
+}
 
 ; constructor for %stackType
 define void @Stack_Create_Empty(%stackType* %this) nounwind
@@ -150,6 +153,7 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
   ret i32 %popped
 }
 """
+
 val mainBegin = """
 
 define i32 @main(i32 %argc, i8** %argv) {
@@ -170,6 +174,31 @@ val ending = """
 }
 """
 
+
+def compile_strings(prog: List[Node]): String = prog match {
+  case Nil => ""
+  case Define(_, list) :: rest => {
+    compile_strings(list) ++ 
+    compile_strings(rest)
+  }
+  case IfElse(a, b) :: rest => {
+    compile_strings(a) ++ 
+    compile_strings(b) ++
+    compile_strings(rest)
+  }
+  case Loop(list) :: rest => {
+    compile_strings(list) ++
+    compile_strings(rest)
+  }
+  case PrintString(str) :: rest => {
+    // unfortunately has to slightly compromise and change the spaces into "_"
+    m"""@.${str.replaceAll(" ", "_")} = private constant [${str.length+1} x i8] c"${str}\\00"""" ++
+    compile_strings(rest)
+  }
+  case _ :: rest => compile_strings(rest)
+}
+
+// This compiles the definitions into functions and strings into global variables
 def compile_definitions(prog: List[Node]): String = prog match {
   case Nil => ""
   case Define(Command(id), list) :: rest => {
@@ -239,6 +268,14 @@ def compile_prog(prog: List[Node]): String = prog match {
     compile_prog(b) ++
     i"br label %${if_exit}" ++
     l"${if_exit}" ++
+    compile_prog(rest)
+  }
+  case PrintString(str) :: rest => {
+    val temp_string = Fresh("temp_string")
+    i";BEGIN PRINT STRING ${str}" ++
+    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i32 0, i32 0" ++
+    i"call i32 (i8*, ...) @printf(i8* %${temp_string})" ++
+    i";END PRINT STRING ${str}" ++
     compile_prog(rest)
   }
   case _ :: rest => compile_prog(rest)
@@ -321,7 +358,7 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
 
-def compile_command(str: String): String = str match {
+def compile_command(str: String): String = str.toUpperCase match {
   case "+" => { 
     val nametop = Fresh("top")
     val namesecond = Fresh("second")
@@ -751,7 +788,12 @@ def compile_command(str: String): String = str match {
 }
 
 def compile(prog: List[Node]): String = {
-  prelude ++ compile_definitions(prog) ++ mainBegin ++ compile_prog(prog) ++ ending
+  prelude ++ 
+  compile_strings(prog) ++ 
+  compile_definitions(prog) ++
+  mainBegin ++ 
+  compile_prog(prog) ++ 
+  ending
 }
 
 import ammonite.ops._

@@ -18,6 +18,7 @@ case class Command(cmd: String) extends Node
 case class Define(id: Command, subroutine: List[Node]) extends Node
 case class Loop(subroutine: List[Node]) extends Node
 case class IfElse(trueSubroutine: List[Node], falseSubroutine: List[Node]) extends Node
+case class PrintString(str: String) extends Node
 case object Comment extends Node
 case object Whitespace extends Node
 
@@ -34,6 +35,9 @@ def number[_: P]: P[Push] = P(
     ("[CHAR]" ~/ white ~ (CharIn("!-~").rep(1).!))
         .map{ case (w, x) => Push(x(0).toInt) }
 )
+def str[_: P]: P[PrintString] = P(
+    (".\" " ~ (!" \"" ~ AnyChar).rep.! ~ " \"").map{ x => PrintString(x) }
+)
 def comment[_: P]: P[Node] = P(
     (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
     ("\\" ~ (!("\n" | "\r\n") ~ AnyChar).rep))
@@ -45,14 +49,14 @@ def white[_: P]: P[Node] = P(
 )
 def idParser[_: P]: P[Command] = P(
     !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("A-Z0-9_").rep(1)).!
-        .map{ x => Command(x) }
+        .map{ x => Command(x.toUpperCase) }
 )
 def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Node]] = P(
-    ((comment | number | loop | command | white | idParser | ifNoElse).rep(1))
+    ((str | comment | number | loop | command | white | idParser | ifNoElse).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
@@ -66,16 +70,16 @@ def ifNoElse[_: P]: P[IfElse] = P(
         .map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
-    (definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
+    (str | definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 
 
-// This function takes as input a string, changes all the lower case letters to upper case,
+// This function takes as input a string
 // and attempts to parse it with the grammar defined above. If it fails, it prints an error message,
 // else, it returns the parsed input as a list of nodes
 def tree(input: String): List[Node] = {
-    parse(input.toUpperCase, program(_)) match {
+    parse(input, program(_)) match {
         case Parsed.Success(list, nb) => list
         case Parsed.Failure(list, nb, extra) => {
             println(s"parsing error at line ${nb}")
