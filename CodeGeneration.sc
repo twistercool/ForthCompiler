@@ -725,6 +725,26 @@ def compile_command(str: String): String = str match {
     i"call void @Stack_PushInt(%stackType* %return_stack, i32 %${top})" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
   }
+  case "INVERT" => {
+    val entry_invert = Fresh("entry_invert")
+    val isFalseFlag = Fresh("isFalseFlag")
+    val changeToTrue = Fresh("changeToTrue")
+    val changeToFalse = Fresh("changeToFalse")
+    val finish_invert = Fresh("finish_invert")
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"br label %${entry_invert}" ++
+    l"${entry_invert}" ++
+    i"%${isFalseFlag} = icmp eq i32 %${top}, 0" ++
+    i"br i1 %${isFalseFlag}, label %${changeToTrue}, label %${changeToFalse}" ++
+    l"${changeToTrue}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish_invert}" ++
+    l"${changeToFalse}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish_invert}" ++
+    l"${finish_invert}"
+  }
   case cmd => {
     i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
   }

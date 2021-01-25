@@ -1,0 +1,1 @@
+10 10 <> INVERT IF 5 . ELSE 25 . THEN
