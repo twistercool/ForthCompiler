@@ -30,7 +30,9 @@ def number[_: P]: P[Push] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
         .map{ case (x, y) => Push(x.toInt) } | 
     ("0" ~ white)
-        .map{ x => Push(0) }
+        .map{ x => Push(0) } |
+    ("[CHAR]" ~ white ~ (CharIn("!-~").rep(1).!))
+        .map{ case (w, x) => Push(x(0).toInt) }
 )
 def comment[_: P]: P[Node] = P(
     (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
