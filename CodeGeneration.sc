@@ -198,6 +198,16 @@ def compile_strings(prog: List[Node]): String = prog match {
   case _ :: rest => compile_strings(rest)
 }
 
+def compile_variables(prog: List[Node]): String = prog match {
+  case Nil => ""
+  case Variable(str) :: rest => {
+    //initialises the global variables to 0
+    m"@.${str} = global i32 0" ++  
+    compile_variables(rest)
+  }
+  case _ :: rest => compile_variables(rest)
+}
+
 // This compiles the definitions into functions and strings into global variables
 def compile_definitions(prog: List[Node]): String = prog match {
   case Nil => ""
@@ -278,6 +288,19 @@ def compile_prog(prog: List[Node]): String = prog match {
     i";END PRINT STRING ${str}" ++
     compile_prog(rest)
   }
+  case AssignVariable(str) :: rest => {
+    val top = Fresh("top")
+
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"store i32 %${top}, i32* @.${str}" ++
+    compile_prog(rest)
+  }
+  case FetchVariable(str) :: rest => {
+    val var_local = Fresh("var_local")
+    i"%${var_local} = load i32, i32* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
+    compile_prog(rest)
+  }
   case _ :: rest => compile_prog(rest)
 }
 
@@ -334,7 +357,7 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     i"store i32 %${newIndex_local3}, i32* %${newIndex_global}" ++
     i"br label %${entry}" ++
     l"${finish}" ++
-    compile_prog(rest)
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case IfElse(a, b) :: rest => {
     val if_block = Fresh("if_block")
@@ -347,13 +370,33 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     i"%${isZero} = icmp eq i32 %${top}, 0" ++
     i"br i1 %${isZero}, label %${else_block}, label %${if_block}" ++
     l"${if_block}" ++
-    compile_prog(a) ++
+    compile_loop(a, innerIndexString, outerIndexString, finishLabel) ++
     i"br label %${if_exit}" ++
     l"${else_block}" ++
-    compile_prog(b) ++
+    compile_loop(b, innerIndexString, outerIndexString, finishLabel) ++
     i"br label %${if_exit}" ++
     l"${if_exit}" ++
-    compile_prog(rest)
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
+  case PrintString(str) :: rest => {
+    val temp_string = Fresh("temp_string")
+    i";BEGIN PRINT STRING ${str}" ++
+    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i32 0, i32 0" ++
+    i"call i32 (i8*, ...) @printf(i8* %${temp_string})" ++
+    i";END PRINT STRING ${str}" ++
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
+  case AssignVariable(str) :: rest => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"store i32 %${top}, i32* @.${str}" ++
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
+  case FetchVariable(str) :: rest => {
+    val var_local = Fresh("var_local")
+    i"%${var_local} = load i32, i32* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
@@ -790,6 +833,7 @@ def compile_command(str: String): String = str.toUpperCase match {
 def compile(prog: List[Node]): String = {
   prelude ++ 
   compile_strings(prog) ++ 
+  compile_variables(prog) ++
   compile_definitions(prog) ++
   mainBegin ++ 
   compile_prog(prog) ++ 

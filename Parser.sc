@@ -83,9 +83,8 @@ def ifNoElse[_: P]: P[IfElse] = P(
         .map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
-    (defineVariable | fetchVariable | assignVariable | str |
-    definition | white | ifNoElse | comment | number | loop | 
-    command | idParser).rep(1)
+    (defineVariable | fetchVariable | assignVariable | str | definition |
+    white | ifNoElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 
