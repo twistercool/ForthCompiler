@@ -19,6 +19,9 @@ case class Define(id: Command, subroutine: List[Node]) extends Node
 case class Loop(subroutine: List[Node]) extends Node
 case class IfElse(trueSubroutine: List[Node], falseSubroutine: List[Node]) extends Node
 case class PrintString(str: String) extends Node
+case class Variable(str: String) extends Node
+case class FetchVariable(str: String) extends Node
+case class AssignVariable(str: String) extends Node
 case object Comment extends Node
 case object Whitespace extends Node
 
@@ -48,15 +51,25 @@ def white[_: P]: P[Node] = P(
         .map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | number) ~ (CharIn("A-Z0-9_").rep(1)).!
+    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE" | number) ~ (CharIn("A-Z0-9_").rep(1)).!
         .map{ x => Command(x.toUpperCase) }
+)
+def defineVariable[_: P]: P[Variable] = P(
+    ("VARIABLE" ~ white ~ idParser).map{ case (w, Command(x)) => Variable(x) }
+)
+def fetchVariable[_: P]: P[FetchVariable] = P(
+    (idParser ~ white ~ "@").map{ case (Command(x), w) => FetchVariable(x) }
+)
+def assignVariable[_: P]: P[AssignVariable] = P(
+    (idParser ~ white ~ "!")
+        .map{ case (Command(id), _) => AssignVariable(id) }
 )
 def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Node]] = P(
-    ((str | comment | number | loop | command | white | idParser | ifNoElse).rep(1))
+    ((str | comment | fetchVariable | assignVariable | number | loop | command | white | idParser | ifNoElse).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
@@ -70,7 +83,9 @@ def ifNoElse[_: P]: P[IfElse] = P(
         .map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
-    (str | definition | white | ifNoElse | comment | number | loop | command | idParser).rep(1)
+    (defineVariable | fetchVariable | assignVariable | str |
+    definition | white | ifNoElse | comment | number | loop | 
+    command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 
