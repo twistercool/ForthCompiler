@@ -150,6 +150,14 @@ define i32 @main(i32 %argc, i8** %argv) {
   call void @Stack_PushInt(%stackType* %stack, i32 %var_local_9)
   %top_10 = call i32 @Stack_Pop(%stackType* %stack)
   %printTop_11 = call i32 @printInt(i32 %top_10)
+  call void @Stack_PushInt(%stackType* %stack, i32 123)
+  call void @Stack_PushInt(%stackType* %stack, i32 45)
+  %top_12 = call i32 @Stack_Pop(%stackType* %stack)
+  %second_13 = call i32 @Stack_Pop(%stackType* %stack)
+  %andValue_14 = and i32 %second_13, %top_12
+  call void @Stack_PushInt(%stackType* %stack, i32 %andValue_14)
+  %top_15 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_16 = call i32 @printInt(i32 %top_15)
 
   ret i32 0
 }

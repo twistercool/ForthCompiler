@@ -26,7 +26,7 @@ case object Comment extends Node
 case object Whitespace extends Node
 
 def command[_: P]: P[Command] = P(
-                    ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|".").!.map{ str => Command(str) } | 
+                    ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|"*/MOD"|".").!.map{ str => Command(str) } | 
                     (">R"|"R>"|"R@").!.map{ str => Command(str) } |
                     ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
 )
@@ -69,14 +69,14 @@ def definition[_: P]: P[Define] = P(
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Node]] = P(
-    ((str | comment | fetchVariable | assignVariable | number | loop | command | white | idParser | ifNoElse).rep(1))
+    ((str | comment | fetchVariable | assignVariable | number | loop | command | white | idParser | ifElse).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
     ("DO" ~ white ~/ subroutine ~ "LOOP")
         .map{ case (w, x) => Loop(x) }
 )
-def ifNoElse[_: P]: P[IfElse] = P(
+def ifElse[_: P]: P[IfElse] = P(
     ("IF" ~ white ~ subroutine ~ "THEN")
         .map{ case (w, x) => IfElse(x, List()) } |
     ("IF" ~ white ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
@@ -84,7 +84,7 @@ def ifNoElse[_: P]: P[IfElse] = P(
 )
 def program[_: P]: P[List[Node]] = P(
     (defineVariable | fetchVariable | assignVariable | str | definition |
-    white | ifNoElse | comment | number | loop | command | idParser).rep(1)
+    white | ifElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 

@@ -723,6 +723,27 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
+  case "0=" => {
+    val top = Fresh("top")
+    val isSmaller = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val is_0 = Fresh("is_0")
+    val push_false = Fresh("push_false") 
+    val push_true = Fresh("push_true")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${is_0} = icmp eq i32 %${top}, 0" ++
+    i"br i1 %${is_0}, label %${push_true}, label %${push_false}" ++
+    l"${push_true}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${push_false}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
   case "<" => {
     val top = Fresh("top")
     val second = Fresh("second")
@@ -789,6 +810,28 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
+  case "=" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val isEqual = Fresh("isSmaller")
+    val entry = Fresh("entry")
+    val equal = Fresh("equal")
+    val unequal = Fresh("unequal")
+    val finish = Fresh("finish")
+    i"br label %${entry}" ++
+    l"${entry}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isEqual} = icmp eq i32 %${top}, %${second}" ++
+    i"br i1 %${isEqual}, label %${equal}, label %${unequal}" ++
+    l"${equal}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"br label %${finish}" ++
+    l"${unequal}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"br label %${finish}" ++
+    l"${finish}"
+  }
   case ">R" => {
     val top = Fresh("top")
     i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
@@ -824,6 +867,33 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
     i"br label %${finish_invert}" ++
     l"${finish_invert}"
+  }
+  case "OR" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val orValue = Fresh("orValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${orValue} = or i32 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${orValue})"
+  }
+  case "XOR" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val xorValue = Fresh("xorValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${xorValue} = xor i32 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${xorValue})"
+  }
+  case "AND" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val andValue = Fresh("andValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${andValue} = and i32 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${andValue})"
   }
   case cmd => {
     i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
