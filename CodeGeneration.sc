@@ -228,8 +228,8 @@ def compile_constants(prog: List[Node]): String = prog match {
     i"%${load_constant} = load i32, i32* @.${str}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${load_constant})" ++
     i"ret void" ++
-    m"}" ++
-    compile_definitions(rest)
+    m"}" ++ 
+    compile_constants(rest)
   }
   case _ :: rest => compile_constants(rest)
 }
@@ -975,7 +975,11 @@ import ammonite.ops._
 def write(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
-    val ast = tree(os.read(path).concat(" "))
+    //add the CodeGeneration.fth Forth code
+    val codeGenerationPath = os.pwd / "CodeGeneration.fth"
+    val generationCode = os.read(codeGenerationPath)
+    val inputFile = os.read(path).concat(" ")
+    val ast = tree(generationCode.concat(inputFile))
     val code = compile(ast)
     os.write.over(os.pwd / (file ++ ".ll"), code)
 }
