@@ -22,13 +22,15 @@ case class PrintString(str: String) extends Node
 case class Variable(str: String) extends Node
 case class FetchVariable(str: String) extends Node
 case class AssignVariable(str: String) extends Node
+case class Constant(str: String) extends Node
 case object Comment extends Node
 case object Whitespace extends Node
 
 def command[_: P]: P[Command] = P(
                     ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|"*/MOD"|".").!.map{ str => Command(str) } | 
                     (">R"|"R>"|"R@").!.map{ str => Command(str) } |
-                    ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) }
+                    ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) } |
+                    ("1+"|"1-").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
@@ -51,7 +53,8 @@ def white[_: P]: P[Node] = P(
         .map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE" | "DO" | number) ~ (CharIn("A-Za-z0-9_").rep(1)).!
+    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE"| "CONSTANT" | "DO" | number) ~ 
+        (CharIn("A-Za-z0-9_").rep(1)).!
         .map{ x => Command(x.toUpperCase) }
 )
 def defineVariable[_: P]: P[Variable] = P(
@@ -63,6 +66,9 @@ def fetchVariable[_: P]: P[FetchVariable] = P(
 def assignVariable[_: P]: P[AssignVariable] = P(
     (idParser ~ white ~ "!")
         .map{ case (Command(id), _) => AssignVariable(id) }
+)
+def defineConstant[_: P]: P[Constant] = P(
+    ("CONSTANT" ~ white ~ idParser).map{ case (w, Command(x)) => Constant(x) }
 )
 def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")
@@ -83,7 +89,7 @@ def ifElse[_: P]: P[IfElse] = P(
         .map{ case (w, x, y) => IfElse(x, y) }
 )
 def program[_: P]: P[List[Node]] = P(
-    (defineVariable | fetchVariable | assignVariable | str | definition |
+    (defineConstant | defineVariable | fetchVariable | assignVariable | str | definition |
     white | ifElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )

@@ -70,6 +70,15 @@ define i32 @printNL()
   ret i32 0
 }
 
+@.space = constant [2 x i8] c" \00"
+
+define i32 @printSpace() 
+{
+  %castSpace = getelementptr [2 x i8], [2 x i8]* @.space, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %castSpace)
+  ret i32 0
+}
+
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
 %stackType = type { 
   i32, ; 0: holds the current length of the stack, or the amount of elements in it 
@@ -91,7 +100,7 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
   ret void
 }
 
-; returns the length of the stack 
+; returns the length of an input stack 
 define i32 @Stack_GetLength(%stackType* %this) nounwind 
 {
   %1 = getelementptr %stackType, %stackType* %this ,i32 0, i32 0
@@ -208,6 +217,23 @@ def compile_variables(prog: List[Node]): String = prog match {
   case _ :: rest => compile_variables(rest)
 }
 
+def compile_constants(prog: List[Node]): String = prog match {
+  case Nil => ""
+  case Constant(str) :: rest => {
+    val load_constant = Fresh("load_constant")
+    m"@.${str} = global i32 0" ++  
+    m"\ndefine void @Stack_Function_${str}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
+    m"{" ++
+    //push the global variable onto the stack
+    i"%${load_constant} = load i32, i32* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${load_constant})" ++
+    i"ret void" ++
+    m"}" ++
+    compile_definitions(rest)
+  }
+  case _ :: rest => compile_constants(rest)
+}
+
 // This compiles the definitions into functions and strings into global variables
 def compile_definitions(prog: List[Node]): String = prog match {
   case Nil => ""
@@ -299,6 +325,13 @@ def compile_prog(prog: List[Node]): String = prog match {
     val var_local = Fresh("var_local")
     i"%${var_local} = load i32, i32* @.${str}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
+    compile_prog(rest)
+  }
+  case Constant(str) :: rest => {
+    val top = Fresh("top")
+
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"store i32 %${top}, i32* @.${str}" ++
     compile_prog(rest)
   }
   case _ :: rest => compile_prog(rest)
@@ -398,45 +431,74 @@ def compile_loop(loopRoutine: List[Node], innerIndexString: String,
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
+  case Constant(str) :: rest => {
+    val top = Fresh("top")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"store i32 %${top}, i32* @.${str}" ++
+    compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+  }
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
 
 def compile_command(str: String): String = str.toUpperCase match {
   case "+" => { 
-    val nametop = Fresh("top")
-    val namesecond = Fresh("second")
+    val top = Fresh("top")
+    val second = Fresh("second")
     val addedValue = Fresh("added")
-    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${addedValue} = add i32 %${namesecond}, %${nametop}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${addedValue} = add i32 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${addedValue})"
   }
   case "-" => { 
-    val nametop = Fresh("top")
-    val namesecond = Fresh("second")
+    val top = Fresh("top")
+    val second = Fresh("second")
     val subvalue = Fresh("subvalue")
-    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${subvalue} = sub i32 %${namesecond}, %${nametop}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = sub i32 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
   }
   case "/" => { 
-    val nametop = Fresh("top")
-    val namesecond = Fresh("second")
+    val top = Fresh("top")
+    val second = Fresh("second")
     val subvalue = Fresh("subvalue")
-    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${subvalue} = udiv i32 %${namesecond}, %${nametop}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = udiv i32 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
   }
   case "*" => { 
-    val nametop = Fresh("top")
-    val namesecond = Fresh("second")
+    val top = Fresh("top")
+    val second = Fresh("second")
     val product = Fresh("product")
-    i"%${nametop} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${namesecond} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${product} = mul i32 %${namesecond}, %${nametop}" ++
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${product} = mul i32 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i32 %${product})"
+  }
+  case "MOD" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val modValue = Fresh("modValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${modValue} = srem i32 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${modValue})"
+  }
+  case "1+" => {
+    val top = Fresh("top")
+    val addedValue = Fresh("addedValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${addedValue} = add i32 %${top}, 1" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${addedValue})"
+  }
+  case "1-" => {
+    val top = Fresh("top")
+    val subValue = Fresh("subValue")
+    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subValue} = sub i32 %${top}, 1" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subValue})"
   }
   case "DUP" => {
     val top = Fresh("top")
@@ -616,13 +678,6 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
-  // case "MOD" => {
-
-  //   val one = stack.head
-  //   val two = stack.tail.head
-  //   val newStack = (two % one) :: stack.tail.tail
-  //   (defs, newStack)
-  // }
   case "NEGATE" => {
     val top = Fresh("top")
     val negatetop = Fresh("negatetop")
@@ -638,6 +693,9 @@ def compile_command(str: String): String = str.toUpperCase match {
   }
   case "CR" => {
     i"call i32 @printNL()"
+  }
+  case "SPACE" => {
+    i"call i32 @printSpace()"
   }
   case "0=" => {
     val top = Fresh("top")
@@ -904,6 +962,7 @@ def compile(prog: List[Node]): String = {
   prelude ++ 
   compile_strings(prog) ++ 
   compile_variables(prog) ++
+  compile_constants(prog) ++
   compile_definitions(prog) ++
   mainBegin ++ 
   compile_prog(prog) ++ 

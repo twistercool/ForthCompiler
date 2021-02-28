@@ -32,6 +32,15 @@ define i32 @printNL()
   ret i32 0
 }
 
+@.space = constant [2 x i8] c" \00"
+
+define i32 @printSpace() 
+{
+  %castSpace = getelementptr [2 x i8], [2 x i8]* @.space, i32 0, i32 0
+  call i32 (i8*, ...) @printf(i8* %castSpace)
+  ret i32 0
+}
+
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
 %stackType = type { 
   i32, ; 0: holds the current length of the stack, or the amount of elements in it 
@@ -53,7 +62,7 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
   ret void
 }
 
-; returns the length of the stack 
+; returns the length of an input stack 
 define i32 @Stack_GetLength(%stackType* %this) nounwind 
 {
   %1 = getelementptr %stackType, %stackType* %this ,i32 0, i32 0
@@ -116,6 +125,14 @@ define i32 @Stack_Pop(%stackType* %this) nounwind
 }
 @.DATA = global i32 0
 @.NB = global i32 0
+@.TWENTY = global i32 0
+
+define void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack) nounwind
+{
+  %load_constant_0 = load i32, i32* @.TWENTY
+  call void @Stack_PushInt(%stackType* %stack, i32 %load_constant_0)
+  ret void
+}
 
 
 define i32 @main(i32 %argc, i8** %argv) {
@@ -130,34 +147,44 @@ define i32 @main(i32 %argc, i8** %argv) {
 
 
   call void @Stack_PushInt(%stackType* %stack, i32 4)
-  %top_0 = call i32 @Stack_Pop(%stackType* %stack)
-  store i32 %top_0, i32* @.NB
-  call void @Stack_PushInt(%stackType* %stack, i32 12)
   %top_1 = call i32 @Stack_Pop(%stackType* %stack)
-  store i32 %top_1, i32* @.DATA
-  %var_local_2 = load i32, i32* @.DATA
-  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_2)
-  %top_3 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_4 = call i32 @printInt(i32 %top_3)
-  %var_local_5 = load i32, i32* @.NB
-  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_5)
-  %top_6 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_7 = call i32 @printInt(i32 %top_6)
+  store i32 %top_1, i32* @.NB
+  call void @Stack_PushInt(%stackType* %stack, i32 12)
+  %top_2 = call i32 @Stack_Pop(%stackType* %stack)
+  store i32 %top_2, i32* @.DATA
+  %var_local_3 = load i32, i32* @.DATA
+  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_3)
+  %top_4 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_5 = call i32 @printInt(i32 %top_4)
+  %var_local_6 = load i32, i32* @.NB
+  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_6)
+  %top_7 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_8 = call i32 @printInt(i32 %top_7)
   call void @Stack_PushInt(%stackType* %stack, i32 543)
-  %top_8 = call i32 @Stack_Pop(%stackType* %stack)
-  store i32 %top_8, i32* @.NB
-  %var_local_9 = load i32, i32* @.NB
-  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_9)
-  %top_10 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_11 = call i32 @printInt(i32 %top_10)
-  call void @Stack_PushInt(%stackType* %stack, i32 123)
-  call void @Stack_PushInt(%stackType* %stack, i32 45)
-  %top_12 = call i32 @Stack_Pop(%stackType* %stack)
-  %second_13 = call i32 @Stack_Pop(%stackType* %stack)
-  %andValue_14 = and i32 %second_13, %top_12
-  call void @Stack_PushInt(%stackType* %stack, i32 %andValue_14)
-  %top_15 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_16 = call i32 @printInt(i32 %top_15)
+  %top_9 = call i32 @Stack_Pop(%stackType* %stack)
+  store i32 %top_9, i32* @.NB
+  %var_local_10 = load i32, i32* @.NB
+  call void @Stack_PushInt(%stackType* %stack, i32 %var_local_10)
+  %top_11 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_12 = call i32 @printInt(i32 %top_11)
+  call void @Stack_PushInt(%stackType* %stack, i32 20)
+  %top_13 = call i32 @Stack_Pop(%stackType* %stack)
+  store i32 %top_13, i32* @.TWENTY
+  call void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack)
+  %top_14 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_15 = call i32 @printInt(i32 %top_14)
+  call void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack)
+  %top_16 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_17 = call i32 @printInt(i32 %top_16)
+  call void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack)
+  %top_18 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_19 = call i32 @printInt(i32 %top_18)
+  call void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack)
+  call void @Stack_Function_TWENTY(%stackType* %stack, %stackType* %return_stack)
+  %top_20 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_21 = call i32 @printInt(i32 %top_20)
+  %top_22 = call i32 @Stack_Pop(%stackType* %stack)
+  %printTop_23 = call i32 @printInt(i32 %top_22)
 
   ret i32 0
 }
