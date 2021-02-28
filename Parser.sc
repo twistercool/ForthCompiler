@@ -51,7 +51,7 @@ def white[_: P]: P[Node] = P(
         .map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE" | number) ~ (CharIn("A-Z0-9_").rep(1)).!
+    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE" | "DO" | number) ~ (CharIn("A-Za-z0-9_").rep(1)).!
         .map{ x => Command(x.toUpperCase) }
 )
 def defineVariable[_: P]: P[Variable] = P(
@@ -87,6 +87,7 @@ def program[_: P]: P[List[Node]] = P(
     white | ifNoElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
+
 
 
 // This function takes as input a string
