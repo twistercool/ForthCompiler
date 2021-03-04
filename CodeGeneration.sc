@@ -979,9 +979,17 @@ def write(fname: String) = {
     val codeGenerationPath = os.pwd / "CodeGeneration.fth"
     val generationCode = os.read(codeGenerationPath)
     val inputFile = os.read(path).concat(" ")
+    
     val ast = tree(generationCode.concat(inputFile))
     val code = compile(ast)
     os.write.over(os.pwd / (file ++ ".ll"), code)
+}
+
+@main
+def timeCompile(fname: String) = {
+    timer{
+      write(fname)
+    }
 }
 
 @main

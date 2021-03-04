@@ -256,13 +256,6 @@ define i32 @main(i32 %argc, i8** %argv) {
   %printTop_42 = call i32 @printInt(i32 %top_41)
   call void @Stack_PushInt(%stackType* %stack, i32 5)
   call void @Stack_Function_SPACES(%stackType* %stack, %stackType* %return_stack)
-  call void @Stack_PushInt(%stackType* %stack, i32 1)
-  call void @Stack_PushInt(%stackType* %stack, i32 2)
-  call void @Stack_Function_NIP(%stackType* %stack, %stackType* %return_stack)
-  %top_43 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_44 = call i32 @printInt(i32 %top_43)
-  %top_45 = call i32 @Stack_Pop(%stackType* %stack)
-  %printTop_46 = call i32 @printInt(i32 %top_45)
 
   ret i32 0
 }

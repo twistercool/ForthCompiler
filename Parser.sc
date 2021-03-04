@@ -30,7 +30,7 @@ def command[_: P]: P[Command] = P(
                     ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|"*/MOD"|".").!.map{ str => Command(str) } | 
                     (">R"|"R>"|"R@").!.map{ str => Command(str) } |
                     ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) } |
-                    ("1+"|"1-").!.map{ str => Command(str) }
+                    ("1+"|"1-"|"?DUP").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
     (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
@@ -54,7 +54,7 @@ def white[_: P]: P[Node] = P(
 )
 def idParser[_: P]: P[Command] = P(
     !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE"| "CONSTANT" | "DO" | number) ~ 
-        (CharIn("A-Za-z0-9_").rep(1)).!
+        (CharIn("A-Za-z0-9_?").rep(1)).!
         .map{ x => Command(x.toUpperCase) }
 )
 def defineVariable[_: P]: P[Variable] = P(
@@ -110,20 +110,23 @@ def tree(input: String): List[Node] = {
     }
 }
 
+def timer[T](function: => T): T = {
+    val timeStamp0 = System.nanoTime()
+    val result = function
+    val timeStamp1 = System.nanoTime()
+    println("Elapsed time: " + (timeStamp1 - timeStamp0) + "ns")
+    result
+}
+
 
 
 @main
-def testParse() = {
-    val theTree = tree(": DEFINITION CLEAR  ROLL ; dabb -4 - ( this is a comment) : DEFINITION2 CLEAR 2 ABS ;  ")
-    // println(theTree)
-    val tree2 = tree("1 2 3 4 5 6 7 8 9 10 2OVER")
-    // println(tree2)
-    val tree3 = tree("DO 10 1 EMIT DEPTH DEFINEDFUCNTION LOOP")
-    // println(tree3)
-    val tree4 = tree("""
-    1 2 3 4 /this is a test
-    . . . .""")
-    // println(tree4)
+def timeParse(fname: String) = {
+    timer{
+    val path = os.pwd / fname
+    val file = fname.stripSuffix("." ++ path.ext)
+    val ast = tree(os.read(path).concat(" "))
+    }
 }
 
 @main
