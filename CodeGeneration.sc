@@ -184,7 +184,7 @@ val ending = """
 """
 
 
-def compile_strings(prog: List[Node]): String = prog match {
+def compile_strings(prog: List[Token]): String = prog match {
   case Nil => ""
   case Define(_, list) :: rest => {
     compile_strings(list) ++ 
@@ -207,7 +207,7 @@ def compile_strings(prog: List[Node]): String = prog match {
   case _ :: rest => compile_strings(rest)
 }
 
-def compile_variables(prog: List[Node]): String = prog match {
+def compile_variables(prog: List[Token]): String = prog match {
   case Nil => ""
   case Variable(str) :: rest => {
     //initialises the global variables to 0
@@ -217,7 +217,7 @@ def compile_variables(prog: List[Node]): String = prog match {
   case _ :: rest => compile_variables(rest)
 }
 
-def compile_constants(prog: List[Node]): String = prog match {
+def compile_constants(prog: List[Token]): String = prog match {
   case Nil => ""
   case Constant(str) :: rest => {
     val load_constant = Fresh("load_constant")
@@ -235,7 +235,7 @@ def compile_constants(prog: List[Node]): String = prog match {
 }
 
 // This compiles the definitions into functions and strings into global variables
-def compile_definitions(prog: List[Node]): String = prog match {
+def compile_definitions(prog: List[Token]): String = prog match {
   case Nil => ""
   case Define(Command(id), list) :: rest => {
     m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
@@ -249,7 +249,7 @@ def compile_definitions(prog: List[Node]): String = prog match {
 }
 
 
-def compile_prog(prog: List[Node]): String = prog match {
+def compile_prog(prog: List[Token]): String = prog match {
   case Nil => ""
   case Push(x) :: rest => {
     i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
@@ -337,7 +337,7 @@ def compile_prog(prog: List[Node]): String = prog match {
   case _ :: rest => compile_prog(rest)
 }
 
-def compile_loop(loopRoutine: List[Node], innerIndexString: String,
+def compile_loop(loopRoutine: List[Token], innerIndexString: String,
   outerIndexString: String, finishLabel: String): String = loopRoutine match {
   case Nil => ""
   case Push(x) :: rest => {
@@ -958,7 +958,7 @@ def compile_command(str: String): String = str.toUpperCase match {
   }
 }
 
-def compile(prog: List[Node]): String = {
+def compile(prog: List[Token]): String = {
   prelude ++ 
   compile_strings(prog) ++ 
   compile_variables(prog) ++

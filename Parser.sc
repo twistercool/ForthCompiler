@@ -12,19 +12,19 @@
 
 import fastparse._, NoWhitespace._
 
-abstract class Node
-case class Push(value: Int) extends Node
-case class Command(cmd: String) extends Node
-case class Define(id: Command, subroutine: List[Node]) extends Node
-case class Loop(subroutine: List[Node]) extends Node
-case class IfElse(trueSubroutine: List[Node], falseSubroutine: List[Node]) extends Node
-case class PrintString(str: String) extends Node
-case class Variable(str: String) extends Node
-case class FetchVariable(str: String) extends Node
-case class AssignVariable(str: String) extends Node
-case class Constant(str: String) extends Node
-case object Comment extends Node
-case object Whitespace extends Node
+abstract class Token
+case class Push(value: Int) extends Token
+case class Command(cmd: String) extends Token
+case class Define(id: Command, subroutine: List[Token]) extends Token
+case class Loop(subroutine: List[Token]) extends Token
+case class IfElse(trueSubroutine: List[Token], falseSubroutine: List[Token]) extends Token
+case class PrintString(str: String) extends Token
+case class Variable(str: String) extends Token
+case class FetchVariable(str: String) extends Token
+case class AssignVariable(str: String) extends Token
+case class Constant(str: String) extends Token
+case object Comment extends Token
+case object Whitespace extends Token
 
 def command[_: P]: P[Command] = P(
                     ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|"*/MOD"|".").!.map{ str => Command(str) } | 
@@ -43,12 +43,12 @@ def number[_: P]: P[Push] = P(
 def str[_: P]: P[PrintString] = P(
     (".\" " ~ (!" \"" ~ AnyChar).rep.! ~ " \"").map{ x => PrintString(x) }
 )
-def comment[_: P]: P[Node] = P(
+def comment[_: P]: P[Token] = P(
     (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
     ("\\" ~ (!("\n" | "\r\n") ~ AnyChar).rep))
         .map{ _ => Comment }
 )
-def white[_: P]: P[Node] = P(
+def white[_: P]: P[Token] = P(
     (CharIn(" \r\n\t")).rep(1)
         .map{ _ => Whitespace }
 )
@@ -74,7 +74,7 @@ def definition[_: P]: P[Define] = P(
     (":" ~ white ~/ idParser ~ subroutine ~ ";")
         .map{ case (w, x, y) => Define(x, y) }
 )
-def subroutine[_: P]: P[List[Node]] = P(
+def subroutine[_: P]: P[List[Token]] = P(
     ((str | comment | fetchVariable | assignVariable | number | loop | command | white | idParser | ifElse).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
@@ -88,7 +88,7 @@ def ifElse[_: P]: P[IfElse] = P(
     ("IF" ~ white ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
         .map{ case (w, x, y) => IfElse(x, y) }
 )
-def program[_: P]: P[List[Node]] = P(
+def program[_: P]: P[List[Token]] = P(
     (defineConstant | defineVariable | fetchVariable | assignVariable | str | definition |
     white | ifElse | comment | number | loop | command | idParser).rep(1)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
@@ -98,8 +98,8 @@ def program[_: P]: P[List[Node]] = P(
 
 // This function takes as input a string
 // and attempts to parse it with the grammar defined above. If it fails, it prints an error message,
-// else, it returns the parsed input as a list of nodes
-def tree(input: String): List[Node] = {
+// else, it returns the parsed input as a list of Tokens
+def tree(input: String): List[Token] = {
     parse(input, program(_)) match {
         case Parsed.Success(list, nb) => list
         case Parsed.Failure(list, nb, extra) => {
