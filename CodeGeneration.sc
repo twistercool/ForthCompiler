@@ -190,7 +190,7 @@ def compile_strings(prog: List[Token]): String = prog match {
     compile_strings(list) ++ 
     compile_strings(rest)
   }
-  case IfElse(a, b) :: rest => {
+  case IfThen(a, b) :: rest => {
     compile_strings(a) ++ 
     compile_strings(b) ++
     compile_strings(rest)
@@ -287,7 +287,7 @@ def compile_prog(prog: List[Token]): String = prog match {
     compile_prog(rest)
   }
   case Define(x, y) :: rest => compile_prog(rest)
-  case IfElse(a, b) :: rest => {
+  case IfThen(a, b) :: rest => {
     val if_block = Fresh("if_block")
     val else_block = Fresh("else_block")
     val isZero = Fresh("isZero")
@@ -392,7 +392,7 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
     l"${finish}" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
-  case IfElse(a, b) :: rest => {
+  case IfThen(a, b) :: rest => {
     val if_block = Fresh("if_block")
     val else_block = Fresh("else_block")
     val isZero = Fresh("isZero")
@@ -979,10 +979,12 @@ def write(fname: String) = {
     val codeGenerationPath = os.pwd / "CodeGeneration.fth"
     val generationCode = os.read(codeGenerationPath)
     val inputFile = os.read(path).concat(" ")
-    
     val ast = tree(generationCode.concat(inputFile))
     val code = compile(ast)
     os.write.over(os.pwd / (file ++ ".ll"), code)
+    os.proc("llc", "-filetype=obj", file ++ ".ll").call()
+    os.proc("clang", "-v", file ++ ".o", "-o", file).call()
+    println("File Compiled")
 }
 
 @main
@@ -997,8 +999,13 @@ def run(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
     write(fname)
-    os.proc("llc", "-filetype=obj", file ++ ".ll").call()
-    os.proc("lli", file ++ ".ll").call(stdout = os.Inherit)
+    os.proc("./" ++ file).call(stdout = os.Inherit)
     println(s" ok")
 }
 
+@main
+def timeRun(fname: String) = {
+    timer{
+      run(fname)
+    }
+}
