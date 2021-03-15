@@ -1,2 +1,5 @@
-# ignore all compiled code 
-*.o 
+ */*         #ignore all files in each directory
+ !*/*.sc     #unignore scala files
+ !*/*.fth    #unignore forth files
+ !.gitignore #unignore .gitignore
+ !.txt       #unignore text files
