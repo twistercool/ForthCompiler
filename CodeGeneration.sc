@@ -43,46 +43,46 @@ val prelude = """
 ; string template for an ASCII character
 @.asciiStr = private constant [4 x i8] c"%c \00"
 
-declare i32 @printf(i8*, ...)
+declare i64 @printf(i8*, ...)
 
-define i32 @printInt(i32 %x) 
+define i64 @printInt(i64 %x) 
 {
   %t0 = getelementptr [4 x i8], [4 x i8]* @.str, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
-  ret i32 %x
+  call i64 (i8*, ...) @printf(i8* %t0, i64 %x) 
+  ret i64 %x
 }
 
-define i32 @print_ASCII(i32 %x) 
+define i64 @print_ASCII(i64 %x) 
 {
   %t0 = getelementptr [4 x i8], [4 x i8]* @.asciiStr, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
-  ret i32 %x
+  call i64 (i8*, ...) @printf(i8* %t0, i64 %x) 
+  ret i64 %x
 }
 
 ; store the newline as a string constant
 ; more specifically as a constant array containing i8 integers
 @.nl = constant [2 x i8] c"\0A\00"
 
-define i32 @printNL() 
+define i64 @printNL() 
 {
   %castNL = getelementptr [2 x i8], [2 x i8]* @.nl, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* %castNL)
-  ret i32 0
+  call i64 (i8*, ...) @printf(i8* %castNL)
+  ret i64 0
 }
 
 @.space = constant [2 x i8] c" \00"
 
-define i32 @printSpace() 
+define i64 @printSpace() 
 {
   %castSpace = getelementptr [2 x i8], [2 x i8]* @.space, i32 0, i32 0
-  call i32 (i8*, ...) @printf(i8* %castSpace)
-  ret i32 0
+  call i64 (i8*, ...) @printf(i8* %castSpace)
+  ret i64 0
 }
 
-;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i32)
+;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i64)
 %stackType = type { 
-  i32, ; 0: holds the current length of the stack, or the amount of elements in it 
-  [100 x i32] ; 1: an array of the elements  
+  i64, ; 0: holds the current length of the stack, or the amount of elements in it 
+  [100 x i64] ; 1: an array of the elements  
 }
 
 ; constructor for %stackType
@@ -90,31 +90,31 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
 {
   ; initialises the length to 0
   %1 = getelementptr %stackType, %stackType* %this, i32 0, i32 0
-  store i32 0, i32* %1
+  store i64 0, i64* %1
 
   ; initialises the array to empty
   %2 = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %empty_stack = alloca [100 x i32]
-  %loaded = load [100 x i32], [100 x i32]* %empty_stack
-  store [100 x i32] %loaded, [100 x i32]* %2
+  %empty_stack = alloca [100 x i64]
+  %loaded = load [100 x i64], [100 x i64]* %empty_stack
+  store [100 x i64] %loaded, [100 x i64]* %2
   ret void
 }
 
 ; returns the length of an input stack 
-define i32 @Stack_GetLength(%stackType* %this) nounwind 
+define i64 @Stack_GetLength(%stackType* %this) nounwind 
 {
-  %1 = getelementptr %stackType, %stackType* %this ,i32 0, i32 0
-  %2 = load i32, i32* %1
-  ret i32 %2
+  %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
+  %2 = load i64, i64* %1
+  ret i64 %2
 }
 
 define void @Stack_IncrementLength(%stackType* %this) nounwind
 { 
   ; loads the length of the stack, adds one, stores it into the stackType
   %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
-  %2 = load i32, i32* %1
-  %3 = add i32 1, %2
-  store i32 %3, i32* %1 
+  %2 = load i64, i64* %1
+  %3 = add i64 1, %2
+  store i64 %3, i64* %1 
   ret void
 }
 
@@ -122,50 +122,50 @@ define void @Stack_DecrementLength(%stackType* %this) nounwind
 { 
   ; loads the length of the stack, adds one, stores it into the stackType
   %1 = getelementptr %stackType, %stackType* %this , i32 0, i32 0
-  %2 = load i32, i32* %1
-  %3 = sub i32 %2, 1
-  store i32 %3, i32* %1 
+  %2 = load i64, i64* %1
+  %3 = sub i64 %2, 1
+  store i64 %3, i64* %1 
   ret void
 }
 
-define void @Stack_PushInt(%stackType* %this, i32 %int) nounwind
+define void @Stack_PushInt(%stackType* %this, i64 %int) nounwind
 { 
   ; loads the length of the stack, adds one, stores it into the stackType
   %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
-  %length = load i32, i32* %lengthptr
+  %length = load i64, i64* %lengthptr
 
   ; gets the pointer element at index %length of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %1 = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 %length
+  %1 = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %length
   ; stores the number in the given pointer
-  store i32 %int, i32* %1
+  store i64 %int, i64* %1
 
   call void @Stack_IncrementLength(%stackType* %this)
   ret void
 }
 
-define i32 @Stack_Pop(%stackType* %this) nounwind
+define i64 @Stack_Pop(%stackType* %this) nounwind
 {
   ; loads the length of the stack, adds one, stores it into the stackType
   %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
-  %length = load i32, i32* %lengthptr
-  %negindex = sub i32 1, %length
-  %index = sub i32 0, %negindex
+  %length = load i64, i64* %lengthptr
+  %negindex = sub i64 1, %length
+  %index = sub i64 0, %negindex
 
   ; gets the pointer element at index %index of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %indexptr = getelementptr [100 x i32], [100 x i32]* %stack, i32 0, i32 %index
+  %indexptr = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %index
   ; loads the number from the given pointer
-  %popped = load i32, i32* %indexptr
+  %popped = load i64, i64* %indexptr
 
   call void @Stack_DecrementLength(%stackType* %this)
-  ret i32 %popped
+  ret i64 %popped
 }
 """
 
 val mainBegin = """
 
-define i32 @main(i32 %argc, i8** %argv) {
+define i32 @main(i64 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
@@ -211,7 +211,7 @@ def compile_variables(prog: List[Token]): String = prog match {
   case Nil => ""
   case Variable(str) :: rest => {
     //initialises the global variables to 0
-    m"@.${str} = global i32 0" ++  
+    m"@.${str} = global i64 0" ++  
     compile_variables(rest)
   }
   case _ :: rest => compile_variables(rest)
@@ -221,12 +221,12 @@ def compile_constants(prog: List[Token]): String = prog match {
   case Nil => ""
   case Constant(str) :: rest => {
     val load_constant = Fresh("load_constant")
-    m"@.${str} = global i32 0" ++  
+    m"@.${str} = global i64 0" ++  
     m"\ndefine void @Stack_Function_${str}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
     m"{" ++
     //push the global variable onto the stack
-    i"%${load_constant} = load i32, i32* @.${str}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${load_constant})" ++
+    i"%${load_constant} = load i64, i64* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${load_constant})" ++
     i"ret void" ++
     m"}" ++ 
     compile_constants(rest)
@@ -252,7 +252,7 @@ def compile_definitions(prog: List[Token]): String = prog match {
 def compile_prog(prog: List[Token]): String = prog match {
   case Nil => ""
   case Push(x) :: rest => {
-    i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ compile_prog(rest)
+    i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ compile_prog(rest)
   }
   case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
   case Loop(list) :: rest => {
@@ -267,21 +267,21 @@ def compile_prog(prog: List[Token]): String = prog match {
     val loop = Fresh("loop")
     val finish = Fresh("finish")
 
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${i_global} = alloca i32" ++
-    i"store i32 %${top}, i32* %${i_global}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${i_global} = alloca i64" ++
+    i"store i64 %${top}, i64* %${i_global}" ++
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${i_local1} = load i32, i32* %${i_global}" ++
-    i"%${isIGreater} = icmp sge i32 %${i_local1}, %${second}" ++
+    i"%${i_local1} = load i64, i64* %${i_global}" ++
+    i"%${isIGreater} = icmp sge i64 %${i_local1}, %${second}" ++
     i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
     l"${loop}" ++
     compile_loop(list, i_global, "", finish) ++
     //increment i_global
-    i"%${i_local2} = load i32, i32* %${i_global}" ++
-    i"%${i_local3} = add i32 1, %${i_local2}" ++
-    i"store i32 %${i_local3}, i32* %${i_global}" ++
+    i"%${i_local2} = load i64, i64* %${i_global}" ++
+    i"%${i_local3} = add i64 1, %${i_local2}" ++
+    i"store i64 %${i_local3}, i64* %${i_global}" ++
     i"br label %${entry}" ++
     l"${finish}" ++
     compile_prog(rest)
@@ -294,8 +294,8 @@ def compile_prog(prog: List[Token]): String = prog match {
     val top = Fresh("top")
     val if_exit = Fresh("if_exit")
     
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isZero} = icmp eq i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isZero} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${isZero}, label %${else_block}, label %${if_block}" ++
     l"${if_block}" ++
     compile_prog(a) ++
@@ -309,29 +309,29 @@ def compile_prog(prog: List[Token]): String = prog match {
   case PrintString(str) :: rest => {
     val temp_string = Fresh("temp_string")
     i";BEGIN PRINT STRING ${str}" ++
-    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i32 0, i32 0" ++
-    i"call i32 (i8*, ...) @printf(i8* %${temp_string})" ++
+    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i64 0, i64 0" ++
+    i"call i64 (i8*, ...) @printf(i8* %${temp_string})" ++
     i";END PRINT STRING ${str}" ++
     compile_prog(rest)
   }
   case AssignVariable(str) :: rest => {
     val top = Fresh("top")
 
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"store i32 %${top}, i32* @.${str}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"store i64 %${top}, i64* @.${str}" ++
     compile_prog(rest)
   }
   case FetchVariable(str) :: rest => {
     val var_local = Fresh("var_local")
-    i"%${var_local} = load i32, i32* @.${str}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
+    i"%${var_local} = load i64, i64* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${var_local})" ++
     compile_prog(rest)
   }
   case Constant(str) :: rest => {
     val top = Fresh("top")
 
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"store i32 %${top}, i32* @.${str}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"store i64 %${top}, i64* @.${str}" ++
     compile_prog(rest)
   }
   case _ :: rest => compile_prog(rest)
@@ -341,19 +341,19 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
   outerIndexString: String, finishLabel: String): String = loopRoutine match {
   case Nil => ""
   case Push(x) :: rest => {
-    i"call void @Stack_PushInt(%stackType* %stack, i32 ${x})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ 
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("I") :: rest => {
     val i_local = Fresh("i_local")
-    i"%${i_local} = load i32, i32* %${innerIndexString}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${i_local})" ++
+    i"%${i_local} = load i64, i64* %${innerIndexString}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${i_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("J") :: rest => {
     val j_local = Fresh("j_local")
-    i"%${j_local} = load i32, i32* %${outerIndexString}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${j_local})" ++
+    i"%${j_local} = load i64, i64* %${outerIndexString}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${j_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("LEAVE") :: rest => {
@@ -373,21 +373,21 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
     val entry = Fresh("entry")
     val loop = Fresh("loop")
     val finish = Fresh("finish")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${newIndex_global} = alloca i32" ++
-    i"store i32 %${top}, i32* %${newIndex_global}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${newIndex_global} = alloca i64" ++
+    i"store i64 %${top}, i64* %${newIndex_global}" ++
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${newIndex_local1} = load i32, i32* %${newIndex_global}" ++
-    i"%${isIGreater} = icmp sge i32 %${newIndex_local1}, %${second}" ++
+    i"%${newIndex_local1} = load i64, i64* %${newIndex_global}" ++
+    i"%${isIGreater} = icmp sge i64 %${newIndex_local1}, %${second}" ++
     i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
     l"${loop}" ++
     compile_loop(list, newIndex_global, innerIndexString, finish) ++
     //increment newIndex_global
-    i"%${newIndex_local2} = load i32, i32* %${newIndex_global}" ++
-    i"%${newIndex_local3} = add i32 1, %${newIndex_local2}" ++
-    i"store i32 %${newIndex_local3}, i32* %${newIndex_global}" ++
+    i"%${newIndex_local2} = load i64, i64* %${newIndex_global}" ++
+    i"%${newIndex_local3} = add i64 1, %${newIndex_local2}" ++
+    i"store i64 %${newIndex_local3}, i64* %${newIndex_global}" ++
     i"br label %${entry}" ++
     l"${finish}" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
@@ -399,8 +399,8 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
     val top = Fresh("top")
     val if_exit = Fresh("if_exit")
     
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isZero} = icmp eq i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isZero} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${isZero}, label %${else_block}, label %${if_block}" ++
     l"${if_block}" ++
     compile_loop(a, innerIndexString, outerIndexString, finishLabel) ++
@@ -414,27 +414,27 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
   case PrintString(str) :: rest => {
     val temp_string = Fresh("temp_string")
     i";BEGIN PRINT STRING ${str}" ++
-    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i32 0, i32 0" ++
-    i"call i32 (i8*, ...) @printf(i8* %${temp_string})" ++
+    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i64 0, i64 0" ++
+    i"call i64 (i8*, ...) @printf(i8* %${temp_string})" ++
     i";END PRINT STRING ${str}" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case AssignVariable(str) :: rest => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"store i32 %${top}, i32* @.${str}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"store i64 %${top}, i64* @.${str}" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case FetchVariable(str) :: rest => {
     val var_local = Fresh("var_local")
-    i"%${var_local} = load i32, i32* @.${str}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${var_local})" ++
+    i"%${var_local} = load i64, i64* @.${str}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${var_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Constant(str) :: rest => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"store i32 %${top}, i32* @.${str}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"store i64 %${top}, i64* @.${str}" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
@@ -445,172 +445,172 @@ def compile_command(str: String): String = str.toUpperCase match {
     val top = Fresh("top")
     val second = Fresh("second")
     val addedValue = Fresh("added")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${addedValue} = add i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${addedValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${addedValue} = add i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${addedValue})"
   }
   case "-" => { 
     val top = Fresh("top")
     val second = Fresh("second")
     val subvalue = Fresh("subvalue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${subvalue} = sub i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = sub i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${subvalue})"
   }
   case "/" => { 
     val top = Fresh("top")
     val second = Fresh("second")
     val subvalue = Fresh("subvalue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${subvalue} = udiv i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subvalue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subvalue} = udiv i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${subvalue})"
   }
   case "*" => { 
     val top = Fresh("top")
     val second = Fresh("second")
     val product = Fresh("product")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${product} = mul i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${product})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${product} = mul i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${product})"
   }
   case "MOD" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val modValue = Fresh("modValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${modValue} = srem i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${modValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${modValue} = srem i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${modValue})"
   }
   case "1+" => {
     val top = Fresh("top")
     val addedValue = Fresh("addedValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${addedValue} = add i32 %${top}, 1" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${addedValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${addedValue} = add i64 %${top}, 1" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${addedValue})"
   }
   case "1-" => {
     val top = Fresh("top")
     val subValue = Fresh("subValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${subValue} = sub i32 %${top}, 1" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${subValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${subValue} = sub i64 %${top}, 1" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${subValue})"
   }
   case "DUP" => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
   case "DEPTH" => {
     val length = Fresh("Length")
-    i"%${length} = call i32 @Stack_GetLength(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${length})"
+    i"%${length} = call i64 @Stack_GetLength(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${length})"
   }
   case "DROP" => {
     val trashed = Fresh("trashed") 
-    i"%${trashed} = call i32 @Stack_Pop(%stackType* %stack)"
+    i"%${trashed} = call i64 @Stack_Pop(%stackType* %stack)"
   }
   case "2DROP" => {
     val trashed1 = Fresh("trashed1")
     val trashed2 = Fresh("trashed2")
-    i"%${trashed1} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${trashed2} = call i32 @Stack_Pop(%stackType* %stack)"
+    i"%${trashed1} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed2} = call i64 @Stack_Pop(%stackType* %stack)"
   }
   case "3DROP" => {
     val trashed1 = Fresh("trashed1")
     val trashed2 = Fresh("trashed2")
     val trashed3 = Fresh("trashed3")
-    i"%${trashed1} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${trashed2} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${trashed3} = call i32 @Stack_Pop(%stackType* %stack)"
+    i"%${trashed1} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed2} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${trashed3} = call i64 @Stack_Pop(%stackType* %stack)"
   }
   case "OVER" => { //could optimise it by just copying the previous value but it doesn't seem very forth-like
     val top = Fresh("top")
     val second = Fresh("second")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})"
   }
   case "2OVER" => { //same as comment above
     val top = Fresh("top")
     val second = Fresh("second")
     val third = Fresh("third")
     val fourth = Fresh("fourth")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${fourth} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++ 
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++ 
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${fourth} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${fourth})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${third})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${fourth})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${third})"
   }
   case "ROT" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val third = Fresh("third")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++ 
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${third})"
   }
   case "-ROT" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val third = Fresh("third")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${third})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})"
   }
   case "SWAP" => {
     val top = Fresh("top")
     val second = Fresh("second")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})"
   }
   case "2SWAP" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val third = Fresh("third")
     val fourth = Fresh("fourth")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${third} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${fourth} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${fourth})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${third})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${third} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${fourth} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${fourth})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${third})"
   }
   case "TUCK" => {
     val top = Fresh("top")
     val second = Fresh("second")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++ 
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++ 
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
   case "EMIT" => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call i32 @print_ASCII(i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call i64 @print_ASCII(i64 %${top})"
   }
   case "ABS" => {
     val top = Fresh("top")
@@ -622,15 +622,15 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entryLabel}" ++
     l"${entryLabel}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isGreater} = icmp sge i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isGreater} = icmp sge i64 %${top}, 0" ++
     i"br i1 %${isGreater}, label %${ifpositive}, label %${elsenegative}" ++
     l"${ifpositive}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
     i"br label %${finish}" ++
     l"${elsenegative}" ++
-    i"%${minustop} = sub i32 0, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${minustop})" ++
+    i"%${minustop} = sub i64 0, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${minustop})" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -644,15 +644,15 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isGreater} = icmp sge i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isGreater} = icmp sge i64 %${top}, %${second}" ++
     i"br i1 %${isGreater}, label %${tophigher}, label %${secondhigher}" ++
     l"${tophigher}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
     i"br label %${finish}" ++
     l"${secondhigher}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -666,36 +666,36 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isSmaller} = icmp sle i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp sle i64 %${top}, %${second}" ++
     i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
     l"${topsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})" ++
     i"br label %${finish}" ++
     l"${secondsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${second})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${second})" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
   case "NEGATE" => {
     val top = Fresh("top")
     val negatetop = Fresh("negatetop")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${negatetop} = sub i32 0, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${negatetop})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${negatetop} = sub i64 0, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${negatetop})"
   }
   case "." => {
     val top = Fresh("top")
     val printTop = Fresh("printTop")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${printTop} = call i32 @printInt(i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${printTop} = call i64 @printInt(i64 %${top})"
   }
   case "CR" => {
-    i"call i32 @printNL()"
+    i"call i64 @printNL()"
   }
   case "SPACE" => {
-    i"call i32 @printSpace()"
+    i"call i64 @printSpace()"
   }
   case "0=" => {
     val top = Fresh("top")
@@ -707,14 +707,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${equal_to_0} = icmp eq i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${equal_to_0} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${equal_to_0}, label %${push_true}, label %${push_false}" ++
     l"${push_true}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${push_false}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -728,14 +728,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${less_than_0} = icmp slt i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${less_than_0} = icmp slt i64 %${top}, 0" ++
     i"br i1 %${less_than_0}, label %${push_true}, label %${push_false}" ++
     l"${push_true}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${push_false}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -749,14 +749,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${more_than_0} = icmp sgt i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${more_than_0} = icmp sgt i64 %${top}, 0" ++
     i"br i1 %${more_than_0}, label %${push_true}, label %${push_false}" ++
     l"${push_true}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${push_false}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -770,14 +770,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${different_than_0} = icmp ne i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${different_than_0} = icmp ne i64 %${top}, 0" ++
     i"br i1 %${different_than_0}, label %${push_true}, label %${push_false}" ++
     l"${push_true}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${push_false}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -791,14 +791,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${is_0} = icmp eq i32 %${top}, 0" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${is_0} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${is_0}, label %${push_true}, label %${push_false}" ++
     l"${push_true}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${push_false}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -812,15 +812,15 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isSmaller} = icmp sle i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp sle i64 %${top}, %${second}" ++
     i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
     l"${topsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${secondsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -834,15 +834,15 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isSmaller} = icmp slt i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isSmaller} = icmp slt i64 %${top}, %${second}" ++
     i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
     l"${topsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${secondsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -856,15 +856,15 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isEqual} = icmp eq i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isEqual} = icmp eq i64 %${top}, %${second}" ++
     i"br i1 %${isEqual}, label %${equal}, label %${unequal}" ++
     l"${equal}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${unequal}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -878,33 +878,33 @@ def compile_command(str: String): String = str.toUpperCase match {
     val finish = Fresh("finish")
     i"br label %${entry}" ++
     l"${entry}" ++
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${isEqual} = icmp eq i32 %${top}, %${second}" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${isEqual} = icmp eq i64 %${top}, %${second}" ++
     i"br i1 %${isEqual}, label %${equal}, label %${unequal}" ++
     l"${equal}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish}" ++
     l"${unequal}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
   case ">R" => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"call void @Stack_PushInt(%stackType* %return_stack, i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})"
   }
   case "R>" => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %return_stack)" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
   case "R@" => {
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %return_stack)" ++
-    i"call void @Stack_PushInt(%stackType* %return_stack, i32 %${top})" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${top})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
+    i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
   case "INVERT" => {
     val entry_invert = Fresh("entry_invert")
@@ -913,16 +913,16 @@ def compile_command(str: String): String = str.toUpperCase match {
     val changeToFalse = Fresh("changeToFalse")
     val finish_invert = Fresh("finish_invert")
     val top = Fresh("top")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"br label %${entry_invert}" ++
     l"${entry_invert}" ++
-    i"%${isFalseFlag} = icmp eq i32 %${top}, 0" ++
+    i"%${isFalseFlag} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${isFalseFlag}, label %${changeToTrue}, label %${changeToFalse}" ++
     l"${changeToTrue}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 -1)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
     i"br label %${finish_invert}" ++
     l"${changeToFalse}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish_invert}" ++
     l"${finish_invert}"
   }
@@ -930,28 +930,28 @@ def compile_command(str: String): String = str.toUpperCase match {
     val top = Fresh("top")
     val second = Fresh("second")
     val orValue = Fresh("orValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${orValue} = or i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${orValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${orValue} = or i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${orValue})"
   }
   case "XOR" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val xorValue = Fresh("xorValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${xorValue} = xor i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${xorValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${xorValue} = xor i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${xorValue})"
   }
   case "AND" => {
     val top = Fresh("top")
     val second = Fresh("second")
     val andValue = Fresh("andValue")
-    i"%${top} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${second} = call i32 @Stack_Pop(%stackType* %stack)" ++
-    i"%${andValue} = and i32 %${second}, %${top}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i32 %${andValue})"
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${andValue} = and i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${andValue})"
   }
   case cmd => {
     i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
