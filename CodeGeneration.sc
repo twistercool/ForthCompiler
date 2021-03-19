@@ -165,7 +165,7 @@ define i64 @Stack_Pop(%stackType* %this) nounwind
 
 val mainBegin = """
 
-define i32 @main(i64 %argc, i8** %argv) {
+define i32 @main(i32 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
@@ -252,9 +252,9 @@ def compile_definitions(prog: List[Token]): String = prog match {
 def compile_prog(prog: List[Token]): String = prog match {
   case Nil => ""
   case Push(x) :: rest => {
-    i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ compile_prog(rest)
+    i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ compile_prog(rest)
   }
-  case Command(x) :: rest => compile_command(x) ++ compile_prog(rest)
+  case Command(x) :: rest => i";${x}" ++ compile_command(x) ++ compile_prog(rest)
   case Loop(list) :: rest => {
     val i_global = Fresh("i_global")
     val i_local1 = Fresh("i_local1")
@@ -274,7 +274,7 @@ def compile_prog(prog: List[Token]): String = prog match {
     i"br label %${entry}" ++
     l"${entry}" ++
     i"%${i_local1} = load i64, i64* %${i_global}" ++
-    i"%${isIGreater} = icmp sge i64 %${i_local1}, %${second}" ++
+    i"%${isIGreater} = icmp eq i64 %${i_local1}, %${second}" ++
     i"br i1 %${isIGreater}, label %${finish}, label %${loop}" ++
     l"${loop}" ++
     compile_loop(list, i_global, "", finish) ++
@@ -330,7 +330,7 @@ def compile_prog(prog: List[Token]): String = prog match {
   case Constant(str) :: rest => {
     val top = Fresh("top")
 
-    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i";constant ${str}" ++ i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"store i64 %${top}, i64* @.${str}" ++
     compile_prog(rest)
   }
@@ -341,26 +341,26 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
   outerIndexString: String, finishLabel: String): String = loopRoutine match {
   case Nil => ""
   case Push(x) :: rest => {
-    i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ 
+    i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ 
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("I") :: rest => {
     val i_local = Fresh("i_local")
-    i"%${i_local} = load i64, i64* %${innerIndexString}" ++
+    i";I" ++ i"%${i_local} = load i64, i64* %${innerIndexString}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${i_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("J") :: rest => {
     val j_local = Fresh("j_local")
-    i"%${j_local} = load i64, i64* %${outerIndexString}" ++
+    i";J" ++ i"%${j_local} = load i64, i64* %${outerIndexString}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${j_local})" ++
     compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command("LEAVE") :: rest => {
-    i"br label %${finishLabel}" ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+    i";LEAVE" ++ i"br label %${finishLabel}" ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Command(x) :: rest => {
-    compile_command(x) ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
+    i";${x}" ++ compile_command(x) ++ compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
   }
   case Loop(list) :: rest => {
     val newIndex_global = Fresh("newIndex_global")
@@ -982,7 +982,7 @@ def write(fname: String) = {
     val ast = tree(generationCode.concat(inputFile))
     val code = compile(ast)
     os.write.over(os.pwd / (file ++ ".ll"), code)
-    os.proc("llc", "-filetype=obj", file ++ ".ll").call()
+    os.proc("llc", "-O3", "-filetype=obj", file ++ ".ll").call()
     os.proc("clang", "-v", file ++ ".o", "-o", file).call()
     println("File Compiled")
 }
@@ -1007,5 +1007,16 @@ def run(fname: String) = {
 def timeRun(fname: String) = {
     timer{
       run(fname)
+    }
+}
+
+@main
+def timeRunOnly(fname: String) = {
+    val path = os.pwd / fname 
+    val file = fname.stripSuffix("." ++ path.ext)
+    write(fname)
+    print("\n")
+    timer{
+      os.proc("./" ++ file).call(stdout = os.Inherit)
     }
 }

@@ -134,6 +134,7 @@ define void @Stack_Function_BL(%stackType* %stack, %stackType* %return_stack) no
 
 define void @Stack_Function_SPACES(%stackType* %stack, %stackType* %return_stack) nounwind
 {
+  ;push 0
   call void @Stack_PushInt(%stackType* %stack, i64 0)
   %top_6 = call i64 @Stack_Pop(%stackType* %stack)
   %second_7 = call i64 @Stack_Pop(%stackType* %stack)
@@ -142,9 +143,10 @@ define void @Stack_Function_SPACES(%stackType* %stack, %stackType* %return_stack
   br label %entry_8
 entry_8:
   %i_local1_2 = load i64, i64* %i_global_1
-  %isIGreater_5 = icmp sge i64 %i_local1_2, %second_7
+  %isIGreater_5 = icmp eq i64 %i_local1_2, %second_7
   br i1 %isIGreater_5, label %finish_10, label %loop_9
 loop_9:
+  ;SPACE
   call i64 @printSpace()
   %i_local2_3 = load i64, i64* %i_global_1
   %i_local3_4 = add i64 1, %i_local2_3
@@ -156,22 +158,26 @@ finish_10:
 
 define void @Stack_Function_FALSE(%stackType* %stack, %stackType* %return_stack) nounwind
 {
+  ;push 0
   call void @Stack_PushInt(%stackType* %stack, i64 0)
   ret void
 }
 
 define void @Stack_Function_TRUE(%stackType* %stack, %stackType* %return_stack) nounwind
 {
+  ;push -1
   call void @Stack_PushInt(%stackType* %stack, i64 -1)
   ret void
 }
 
 define void @Stack_Function_TUCK(%stackType* %stack, %stackType* %return_stack) nounwind
 {
+  ;SWAP
   %top_11 = call i64 @Stack_Pop(%stackType* %stack)
   %second_12 = call i64 @Stack_Pop(%stackType* %stack)
   call void @Stack_PushInt(%stackType* %stack, i64 %top_11)
   call void @Stack_PushInt(%stackType* %stack, i64 %second_12)
+  ;OVER
   %top_13 = call i64 @Stack_Pop(%stackType* %stack)
   %second_14 = call i64 @Stack_Pop(%stackType* %stack)
   call void @Stack_PushInt(%stackType* %stack, i64 %second_14)
@@ -182,16 +188,18 @@ define void @Stack_Function_TUCK(%stackType* %stack, %stackType* %return_stack) 
 
 define void @Stack_Function_NIP(%stackType* %stack, %stackType* %return_stack) nounwind
 {
+  ;SWAP
   %top_15 = call i64 @Stack_Pop(%stackType* %stack)
   %second_16 = call i64 @Stack_Pop(%stackType* %stack)
   call void @Stack_PushInt(%stackType* %stack, i64 %top_15)
   call void @Stack_PushInt(%stackType* %stack, i64 %second_16)
+  ;DROP
   %trashed_17 = call i64 @Stack_Pop(%stackType* %stack)
   ret void
 }
 
 
-define i32 @main(i64 %argc, i8** %argv) {
+define i32 @main(i32 %argc, i8** %argv) {
   ; uses the 
   %stack = alloca %stackType
   call void @Stack_Create_Empty(%stackType* %stack)
@@ -202,17 +210,36 @@ define i32 @main(i64 %argc, i8** %argv) {
   ; COMPILED CODE STARTS HERE
 
 
+  ;push 32
   call void @Stack_PushInt(%stackType* %stack, i64 32)
+  ;constant BL
   %top_18 = call i64 @Stack_Pop(%stackType* %stack)
   store i64 %top_18, i64* @.BL
-  call void @Stack_PushInt(%stackType* %stack, i64 5)
-  call void @Stack_PushInt(%stackType* %stack, i64 6)
-  %top_19 = call i64 @Stack_Pop(%stackType* %stack)
-  %second_20 = call i64 @Stack_Pop(%stackType* %stack)
-  %added_21 = add i64 %second_20, %top_19
-  call void @Stack_PushInt(%stackType* %stack, i64 %added_21)
-  %top_22 = call i64 @Stack_Pop(%stackType* %stack)
-  %printTop_23 = call i64 @printInt(i64 %top_22)
+  ;push 10000000
+  call void @Stack_PushInt(%stackType* %stack, i64 10000000)
+  ;push 0
+  call void @Stack_PushInt(%stackType* %stack, i64 0)
+  %top_24 = call i64 @Stack_Pop(%stackType* %stack)
+  %second_25 = call i64 @Stack_Pop(%stackType* %stack)
+  %i_global_19 = alloca i64
+  store i64 %top_24, i64* %i_global_19
+  br label %entry_26
+entry_26:
+  %i_local1_20 = load i64, i64* %i_global_19
+  %isIGreater_23 = icmp eq i64 %i_local1_20, %second_25
+  br i1 %isIGreater_23, label %finish_28, label %loop_27
+loop_27:
+  ;I
+  %i_local_29 = load i64, i64* %i_global_19
+  call void @Stack_PushInt(%stackType* %stack, i64 %i_local_29)
+  ;.
+  %top_30 = call i64 @Stack_Pop(%stackType* %stack)
+  %printTop_31 = call i64 @printInt(i64 %top_30)
+  %i_local2_21 = load i64, i64* %i_global_19
+  %i_local3_22 = add i64 1, %i_local2_21
+  store i64 %i_local3_22, i64* %i_global_19
+  br label %entry_26
+finish_28:
 
   ret i32 0
 }

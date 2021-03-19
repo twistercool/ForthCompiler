@@ -33,7 +33,7 @@ def command[_: P]: P[Command] = P(
                     ("1+"|"1-"|"?DUP").!.map{ str => Command(str) }
 )
 def number[_: P]: P[Push] = P(
-    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~/ white )
+    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
         .map{ case (x, y) => Push(x.toInt) } | 
     ("0" ~ white)
         .map{ x => Push(0) } |
@@ -41,7 +41,7 @@ def number[_: P]: P[Push] = P(
         .map{ case (w, x) => Push(x(0).toInt) }
 )
 def str[_: P]: P[PrintString] = P(
-    (".\" " ~/ (!" \"" ~ AnyChar).rep.! ~ " \"").map{ x => PrintString(x) }
+    (".\" " ~/ (!"\"" ~ AnyChar).rep.! ~ "\"").map{ x => PrintString(x) }
 )
 def comment[_: P]: P[Token] = P(
     (("(" ~/ (!")" ~ AnyChar).rep ~ ")").! | 
@@ -83,10 +83,10 @@ def loop[_: P]: P[Loop] = P(
         .map{ x => Loop(x) }
 )
 def ifThen[_: P]: P[IfThen] = P(
-    ("IF" ~ white ~ subroutine ~ "THEN")
-        .map{ case (w, x) => IfThen(x, List()) } |
-    ("IF" ~/ white ~ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
-        .map{ case (w, x, y) => IfThen(x, y) }
+    ("IF" ~ subroutine ~ "THEN")
+        .map{ x => IfThen(x, List()) } |
+    ("IF" ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
+        .map{ case (x, y) => IfThen(x, y) }
 )
 def program[_: P]: P[List[Token]] = P(
     (defineConstant | defineVariable | fetchVariable | assignVariable | str | definition |
