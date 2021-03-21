@@ -30,5 +30,5 @@ CR F CR
 DATA @ . NB @ . 543 NB ! NB @ .
 
 
-TWENTY . 
+TWENTY .
 TWENTY .
