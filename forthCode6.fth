@@ -4,7 +4,8 @@
    DUP 24 < IF  ." medium "      ELSE
    DUP 27 < IF  ." large "       ELSE
    DUP 30 < IF  ." extra large " ELSE
-      ." error " 
+   ." error " 
    THEN THEN THEN THEN THEN DROP ;
 
-28 EGGSIZE
+19 EGGSIZE
+

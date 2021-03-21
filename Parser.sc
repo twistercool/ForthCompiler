@@ -37,15 +37,15 @@ def number[_: P]: P[Push] = P(
         .map{ case (x, y) => Push(x.toInt) } | 
     ("0" ~ white)
         .map{ x => Push(0) } |
-    ("[CHAR]" ~/ white ~ (CharIn("!-~").rep(1).!))
+    ("[CHAR]" ~ white ~ (CharIn("!-~").rep(1).!))
         .map{ case (w, x) => Push(x(0).toInt) }
 )
 def str[_: P]: P[PrintString] = P(
-    (".\" " ~/ (!"\"" ~ AnyChar).rep.! ~ "\"").map{ x => PrintString(x) }
+    (".\" " ~ (!"\"" ~ AnyChar).rep.! ~ "\"").map{ x => PrintString(x) }
 )
 def comment[_: P]: P[Token] = P(
-    (("(" ~/ (!")" ~ AnyChar).rep ~ ")").! | 
-    ("\\" ~/ (!("\n" | "\r\n") ~ AnyChar).rep))
+    (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
+    ("\\" ~ (!("\n" | "\r\n") ~ AnyChar).rep))
         .map{ _ => Comment }
 )
 def white[_: P]: P[Token] = P(
@@ -58,7 +58,7 @@ def idParser[_: P]: P[Command] = P(
         .map{ x => Command(x.toUpperCase) }
 )
 def defineVariable[_: P]: P[Variable] = P(
-    ("VARIABLE" ~/ white ~ idParser).map{ case (w, Command(x)) => Variable(x) }
+    ("VARIABLE" ~ white ~ idParser).map{ case (w, Command(x)) => Variable(x) }
 )
 def fetchVariable[_: P]: P[FetchVariable] = P(
     (idParser ~ white ~ "@").map{ case (Command(x), w) => FetchVariable(x) }
@@ -68,10 +68,10 @@ def assignVariable[_: P]: P[AssignVariable] = P(
         .map{ case (Command(id), _) => AssignVariable(id) }
 )
 def defineConstant[_: P]: P[Constant] = P(
-    ("CONSTANT" ~/ white ~/ idParser).map{ case (w, Command(x)) => Constant(x) }
+    ("CONSTANT" ~ white ~ idParser).map{ case (w, Command(x)) => Constant(x) }
 )
 def definition[_: P]: P[Define] = P(
-    (":" ~/ white ~ idParser ~/ subroutine ~ ";")
+    (":" ~ white ~ idParser ~ subroutine ~ ";")
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Token]] = P(
@@ -79,13 +79,13 @@ def subroutine[_: P]: P[List[Token]] = P(
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
-    ("DO" ~/ subroutine ~ "LOOP")
+    ("DO" ~ subroutine ~ "LOOP")
         .map{ x => Loop(x) }
 )
 def ifThen[_: P]: P[IfThen] = P(
     ("IF" ~ subroutine ~ "THEN")
         .map{ x => IfThen(x, List()) } |
-    ("IF" ~/ subroutine ~ "ELSE" ~/ subroutine ~ "THEN")
+    ("IF" ~ subroutine ~ "ELSE" ~ subroutine ~ "THEN")
         .map{ case (x, y) => IfThen(x, y) }
 )
 def program[_: P]: P[List[Token]] = P(

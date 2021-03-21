@@ -82,7 +82,7 @@ define i64 @printSpace()
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i64)
 %stackType = type { 
   i64, ; 0: holds the current length of the stack, or the amount of elements in it 
-  [100 x i64] ; 1: an array of the elements  
+  <256 x i64> ; 1: an array of the elements  
 }
 
 ; constructor for %stackType
@@ -94,9 +94,9 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
 
   ; initialises the array to empty
   %2 = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %empty_stack = alloca [100 x i64]
-  %loaded = load [100 x i64], [100 x i64]* %empty_stack
-  store [100 x i64] %loaded, [100 x i64]* %2
+  %empty_stack = alloca <256 x i64>
+  %loaded = load <256 x i64>, <256 x i64>* %empty_stack
+  store <256 x i64> %loaded, <256 x i64>* %2
   ret void
 }
 
@@ -136,7 +136,7 @@ define void @Stack_PushInt(%stackType* %this, i64 %int) nounwind
 
   ; gets the pointer element at index %length of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %1 = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %length
+  %1 = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %length
   ; stores the number in the given pointer
   store i64 %int, i64* %1
 
@@ -149,12 +149,11 @@ define i64 @Stack_Pop(%stackType* %this) nounwind
   ; loads the length of the stack, adds one, stores it into the stackType
   %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %length = load i64, i64* %lengthptr
-  %negindex = sub i64 1, %length
-  %index = sub i64 0, %negindex
+  %index = sub i64 %length, 1
 
   ; gets the pointer element at index %index of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %indexptr = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %index
+  %indexptr = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %index
   ; loads the number from the given pointer
   %popped = load i64, i64* %indexptr
 
@@ -173,39 +172,40 @@ define i32 @main(i32 %argc, i8** %argv) {
   call void @Stack_Create_Empty(%stackType* %return_stack)
 
 
-  ; COMPILED CODE STARTS HERE
+  ; COMPILED FORTH CODE STARTS HERE
 
 
 """
 
 val ending = """
+  ; COMPILATION FINISHED
   ret i32 0
 }
 """
 
 
-def compile_strings(prog: List[Token]): String = prog match {
-  case Nil => ""
-  case Define(_, list) :: rest => {
-    compile_strings(list) ++ 
-    compile_strings(rest)
-  }
-  case IfThen(a, b) :: rest => {
-    compile_strings(a) ++ 
-    compile_strings(b) ++
-    compile_strings(rest)
-  }
-  case Loop(list) :: rest => {
-    compile_strings(list) ++
-    compile_strings(rest)
-  }
-  case PrintString(str) :: rest => {
-    // unfortunately has to slightly compromise and change the spaces into "_"
-    m"""@.${str.replaceAll(" ", "_")} = private constant [${str.length+1} x i8] c"${str}\\00"""" ++
-    compile_strings(rest)
-  }
-  case _ :: rest => compile_strings(rest)
-}
+// def compile_strings(prog: List[Token]): String = prog match {
+//   case Nil => ""
+//   case Define(_, list) :: rest => {
+//     compile_strings(list) ++ 
+//     compile_strings(rest)
+//   }
+//   case IfThen(a, b) :: rest => {
+//     compile_strings(a) ++ 
+//     compile_strings(b) ++
+//     compile_strings(rest)
+//   }
+//   case Loop(list) :: rest => {
+//     compile_strings(list) ++
+//     compile_strings(rest)
+//   }
+//   case PrintString(str) :: rest => {
+//     // unfortunately has to slightly compromise and change the spaces into "_"
+//     m"""@.${str.replaceAll(" ", "_")} = private constant [${str.length+1} x i8] c"${str}\\00"""" ++
+//     compile_strings(rest)
+//   }
+//   case _ :: rest => compile_strings(rest)
+// }
 
 def compile_variables(prog: List[Token]): String = prog match {
   case Nil => ""
@@ -307,11 +307,13 @@ def compile_prog(prog: List[Token]): String = prog match {
     compile_prog(rest)
   }
   case PrintString(str) :: rest => {
-    val temp_string = Fresh("temp_string")
-    i";BEGIN PRINT STRING ${str}" ++
-    i"%${temp_string} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* @.${str.replaceAll(" ", "_")}, i64 0, i64 0" ++
-    i"call i64 (i8*, ...) @printf(i8* %${temp_string})" ++
-    i";END PRINT STRING ${str}" ++
+    val string_ref = Fresh("string_ref")
+    val string_ptr = Fresh("string_ptr")
+    i";PRINT STRING ${str}" ++
+    i"%${string_ref} = alloca [${str.length+1} x i8]" ++
+    s"""  store [${str.length+1} x i8] c"${str}\\00", [${str.length+1} x i8]* %${string_ref}""" ++
+    i"\n  %${string_ptr} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* %${string_ref}, i64 0, i64 0" ++
+    i"call i64 (i8*, ...) @printf(i8* %${string_ptr})" ++
     compile_prog(rest)
   }
   case AssignVariable(str) :: rest => {
@@ -914,7 +916,6 @@ def compile_command(str: String): String = str.toUpperCase match {
 
 def compile(prog: List[Token]): String = {
   prelude ++ 
-  compile_strings(prog) ++ 
   compile_variables(prog) ++
   compile_constants(prog) ++
   compile_definitions(prog) ++

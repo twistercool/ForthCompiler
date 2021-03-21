@@ -44,7 +44,7 @@ define i64 @printSpace()
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i64)
 %stackType = type { 
   i64, ; 0: holds the current length of the stack, or the amount of elements in it 
-  [100 x i64] ; 1: an array of the elements  
+  <256 x i64> ; 1: an array of the elements  
 }
 
 ; constructor for %stackType
@@ -56,9 +56,9 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
 
   ; initialises the array to empty
   %2 = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %empty_stack = alloca [100 x i64]
-  %loaded = load [100 x i64], [100 x i64]* %empty_stack
-  store [100 x i64] %loaded, [100 x i64]* %2
+  %empty_stack = alloca <256 x i64>
+  %loaded = load <256 x i64>, <256 x i64>* %empty_stack
+  store <256 x i64> %loaded, <256 x i64>* %2
   ret void
 }
 
@@ -98,7 +98,7 @@ define void @Stack_PushInt(%stackType* %this, i64 %int) nounwind
 
   ; gets the pointer element at index %length of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %1 = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %length
+  %1 = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %length
   ; stores the number in the given pointer
   store i64 %int, i64* %1
 
@@ -111,12 +111,11 @@ define i64 @Stack_Pop(%stackType* %this) nounwind
   ; loads the length of the stack, adds one, stores it into the stackType
   %lengthptr = getelementptr %stackType, %stackType* %this , i32 0, i32 0
   %length = load i64, i64* %lengthptr
-  %negindex = sub i64 1, %length
-  %index = sub i64 0, %negindex
+  %index = sub i64 %length, 1
 
   ; gets the pointer element at index %index of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %indexptr = getelementptr [100 x i64], [100 x i64]* %stack, i32 0, i64 %index
+  %indexptr = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %index
   ; loads the number from the given pointer
   %popped = load i64, i64* %indexptr
 
@@ -287,25 +286,33 @@ define void @Stack_Function_FIBS(%stackType* %stack, %stackType* %return_stack) 
   call void @Stack_PushInt(%stackType* %stack, i64 %second_50)
   call void @Stack_PushInt(%stackType* %stack, i64 %top_49)
   call void @Stack_PushInt(%stackType* %stack, i64 %third_51)
+  ;1-
+  %top_52 = call i64 @Stack_Pop(%stackType* %stack)
+  %subValue_53 = sub i64 %top_52, 1
+  call void @Stack_PushInt(%stackType* %stack, i64 %subValue_53)
+  ;1-
+  %top_54 = call i64 @Stack_Pop(%stackType* %stack)
+  %subValue_55 = sub i64 %top_54, 1
+  call void @Stack_PushInt(%stackType* %stack, i64 %subValue_55)
   ;push 0
   call void @Stack_PushInt(%stackType* %stack, i64 0)
-  %top_57 = call i64 @Stack_Pop(%stackType* %stack)
-  %second_58 = call i64 @Stack_Pop(%stackType* %stack)
-  %i_global_52 = alloca i64
-  store i64 %top_57, i64* %i_global_52
-  br label %entry_59
-entry_59:
-  %i_local1_53 = load i64, i64* %i_global_52
-  %isIEqual_56 = icmp eq i64 %i_local1_53, %second_58
-  br i1 %isIEqual_56, label %finish_61, label %loop_60
-loop_60:
+  %top_61 = call i64 @Stack_Pop(%stackType* %stack)
+  %second_62 = call i64 @Stack_Pop(%stackType* %stack)
+  %i_global_56 = alloca i64
+  store i64 %top_61, i64* %i_global_56
+  br label %entry_63
+entry_63:
+  %i_local1_57 = load i64, i64* %i_global_56
+  %isIEqual_60 = icmp eq i64 %i_local1_57, %second_62
+  br i1 %isIEqual_60, label %finish_65, label %loop_64
+loop_64:
   ;FIB
   call void @Stack_Function_FIB(%stackType* %stack, %stackType* %return_stack)
-  %i_local2_54 = load i64, i64* %i_global_52
-  %i_local3_55 = add i64 1, %i_local2_54
-  store i64 %i_local3_55, i64* %i_global_52
-  br label %entry_59
-finish_61:
+  %i_local2_58 = load i64, i64* %i_global_56
+  %i_local3_59 = add i64 1, %i_local2_58
+  store i64 %i_local3_59, i64* %i_global_56
+  br label %entry_63
+finish_65:
   ret void
 }
 
@@ -324,8 +331,8 @@ define i32 @main(i32 %argc, i8** %argv) {
   ;push 32
   call void @Stack_PushInt(%stackType* %stack, i64 32)
   ;constant BL
-  %top_62 = call i64 @Stack_Pop(%stackType* %stack)
-  store i64 %top_62, i64* @.BL
+  %top_66 = call i64 @Stack_Pop(%stackType* %stack)
+  store i64 %top_66, i64* @.BL
   ;push 40
   call void @Stack_PushInt(%stackType* %stack, i64 40)
   ;FIBS
