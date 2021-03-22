@@ -899,9 +899,10 @@ def write(fname: String) = {
     val inputFile = os.read(path).concat(" ")
     val ast = tree(generationCode.concat(inputFile))
     val code = compile(ast)
-    os.write.over(os.pwd / (file ++ ".ll"), code)
-    os.proc("llc", "-O3", "-filetype=obj", file ++ ".ll").call()
-    os.proc("clang", "-v", file ++ ".o", "-o", file).call()
+    if (!os.isDir(os.pwd / file)) os.makeDir(os.pwd / file)
+    os.write.over(os.pwd / file / (file ++ ".ll"), code)
+    os.proc("llc", "-O3", "-filetype=obj", file / (file ++ ".ll")).call()
+    os.proc("clang", "-v", file /(file ++ ".o"), "-o", file / file).call()
     println("File Compiled")
 }
 
@@ -917,7 +918,7 @@ def run(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
     write(fname)
-    os.proc("./" ++ file).call(stdout = os.Inherit)
+    os.proc("./" ++ file ++ "/" ++ file).call(stdout = os.Inherit)
     println(s" ok")
 }
 
@@ -928,13 +929,13 @@ def timeRun(fname: String) = {
     }
 }
 
-@main
-def timeRunOnly(fname: String) = {
-    val path = os.pwd / fname 
-    val file = fname.stripSuffix("." ++ path.ext)
-    write(fname)
-    print("\n")
-    timer{
-      os.proc("./" ++ file).call(stdout = os.Inherit)
-    }
-}
+// @main
+// def timeRunOnly(fname: String) = {
+//     val path = os.pwd / fname 
+//     val file = fname.stripSuffix("." ++ path.ext)
+//     write(fname)
+//     print("\n")
+//     timer{
+//       os.proc(("./" ++ file) / file).call(stdout = os.Inherit)
+//     }
+// }

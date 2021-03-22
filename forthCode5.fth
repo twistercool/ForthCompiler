@@ -14,7 +14,7 @@
 0 DO STAR LOOP ;	   \ Loop n times (0 up to n-1) and execute STAR
 
 
-: SQUARE	( n -- )   \ Print an n-line square of stars
+: SQUARESTARS	( n -- )   \ Print an n-line square of stars
 DUP 0 DO		   \ Loop n times, keeping (DUP-licating) n on the stack
 DUP STARS CR            \ Each time, print n stars then print CR
 LOOP DROP ;             \ After loop is done, drop the n from the stack
@@ -29,7 +29,7 @@ LOOP ;
 : TOWER	( n -- )   \ Print a "tower" with an base of size n
 DUP                     \ DUP-licate n (since it is used twice below)
 1 - TRIANGLE            \ Print a triangle 1 size smaller than n
-SQUARE ;                \ Print a square base of size n
+SQUARESTARS ;                \ Print a square base of size n
 
 \ CR 7 STARS
 
