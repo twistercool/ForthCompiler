@@ -184,41 +184,17 @@ val ending = """
 """
 
 
-// def compile_strings(prog: List[Token]): String = prog match {
-//   case Nil => ""
-//   case Define(_, list) :: rest => {
-//     compile_strings(list) ++ 
-//     compile_strings(rest)
-//   }
-//   case IfThen(a, b) :: rest => {
-//     compile_strings(a) ++ 
-//     compile_strings(b) ++
-//     compile_strings(rest)
-//   }
-//   case Loop(list) :: rest => {
-//     compile_strings(list) ++
-//     compile_strings(rest)
-//   }
-//   case PrintString(str) :: rest => {
-//     // unfortunately has to slightly compromise and change the spaces into "_"
-//     m"""@.${str.replaceAll(" ", "_")} = private constant [${str.length+1} x i8] c"${str}\\00"""" ++
-//     compile_strings(rest)
-//   }
-//   case _ :: rest => compile_strings(rest)
-// }
-
-def compile_variables(prog: List[Token]): String = prog match {
+// This compiles the definitions into functions and strings into global variables
+def compile_definitions(prog: List[Token]): String = prog match {
   case Nil => ""
-  case Variable(str) :: rest => {
-    //initialises the global variables to 0
-    m"@.${str} = global i64 0" ++  
-    compile_variables(rest)
+  case Define(Command(id), list) :: rest => {
+    m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
+    m"{" ++
+    compile_prog(list) ++
+    i"ret void" ++
+    m"}" ++
+    compile_definitions(rest)
   }
-  case _ :: rest => compile_variables(rest)
-}
-
-def compile_constants(prog: List[Token]): String = prog match {
-  case Nil => ""
   case Constant(str) :: rest => {
     val load_constant = Fresh("load_constant")
     m"@.${str} = global i64 0" ++  
@@ -229,20 +205,11 @@ def compile_constants(prog: List[Token]): String = prog match {
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${load_constant})" ++
     i"ret void" ++
     m"}" ++ 
-    compile_constants(rest)
+    compile_definitions(rest)
   }
-  case _ :: rest => compile_constants(rest)
-}
-
-// This compiles the definitions into functions and strings into global variables
-def compile_definitions(prog: List[Token]): String = prog match {
-  case Nil => ""
-  case Define(Command(id), list) :: rest => {
-    m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
-    m"{" ++
-    compile_prog(list) ++
-    i"ret void" ++
-    m"}" ++
+  case Variable(str) :: rest => {
+    //initialises the global variables to 0
+    m"@.${str} = global i64 0" ++  
     compile_definitions(rest)
   }
   case _ :: rest => compile_definitions(rest)
@@ -318,7 +285,6 @@ def compile_prog(prog: List[Token]): String = prog match {
   }
   case AssignVariable(str) :: rest => {
     val top = Fresh("top")
-
     i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"store i64 %${top}, i64* @.${str}" ++
     compile_prog(rest)
@@ -331,7 +297,6 @@ def compile_prog(prog: List[Token]): String = prog match {
   }
   case Constant(str) :: rest => {
     val top = Fresh("top")
-
     i";constant ${str}" ++ i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"store i64 %${top}, i64* @.${str}" ++
     compile_prog(rest)
@@ -916,11 +881,9 @@ def compile_command(str: String): String = str.toUpperCase match {
 
 def compile(prog: List[Token]): String = {
   prelude ++ 
-  compile_variables(prog) ++
-  compile_constants(prog) ++
   compile_definitions(prog) ++
-  mainBegin ++ 
-  compile_prog(prog) ++ 
+  mainBegin ++
+  compile_prog(prog) ++
   ending
 }
 
