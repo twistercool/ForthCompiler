@@ -130,7 +130,7 @@ def timeParse(fname: String) = {
 }
 
 @main
-def parseFile(fname: String) = {
+    def parseFile(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
     val ast = tree(os.read(path).concat(" "))

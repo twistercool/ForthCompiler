@@ -22,3 +22,6 @@
 : SQUARE ( x -- x^2 )
     DUP *
 ;
+: 2DUP ( x0 x1-- x0 x1 x0 x1)
+    OVER OVER    
+;

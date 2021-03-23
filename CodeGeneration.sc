@@ -19,8 +19,8 @@ import $file.Parser, Parser._
 var counter = -1
 
 def Fresh(x: String) = {
-  counter += 1
-  x ++ "_" ++ counter.toString()
+    counter += 1
+    x ++ "_" ++ counter.toString()
 }
 
 
@@ -185,17 +185,15 @@ val ending = """
 
 
 // This compiles the definitions into functions and strings into global variables
-def compile_definitions(prog: List[Token]): String = prog match {
-  case Nil => ""
-  case Define(Command(id), list) :: rest => {
+def compile_definition(prog: Token): String = prog match {
+  case Define(Command(id), list)  => {
     m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
     m"{" ++
-    compile_prog(list) ++
+    compile_progs(list) ++
     i"ret void" ++
-    m"}" ++
-    compile_definitions(rest)
+    m"}"
   }
-  case Constant(str) :: rest => {
+  case Constant(str)  => {
     val load_constant = Fresh("load_constant")
     m"@.${str} = global i64 0" ++  
     m"\ndefine void @Stack_Function_${str}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
@@ -204,25 +202,22 @@ def compile_definitions(prog: List[Token]): String = prog match {
     i"%${load_constant} = load i64, i64* @.${str}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${load_constant})" ++
     i"ret void" ++
-    m"}" ++ 
-    compile_definitions(rest)
+    m"}"
   }
-  case Variable(str) :: rest => {
+  case Variable(str)  => {
     //initialises the global variables to 0
-    m"@.${str} = global i64 0" ++  
-    compile_definitions(rest)
+    m"@.${str} = global i64 0"
   }
-  case _ :: rest => compile_definitions(rest)
+  case _  => ""
 }
 
 
-def compile_prog(prog: List[Token]): String = prog match {
-  case Nil => ""
-  case Push(x) :: rest => {
-    i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})" ++ compile_prog(rest)
+def compile_prog(prog: Token): String = prog match {
+  case Push(x) => {
+    i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})"
   }
-  case Command(x) :: rest => i";${x}" ++ compile_command(x) ++ compile_prog(rest)
-  case Loop(list) :: rest => {
+  case Command(x) => i";${x}" ++ compile_command(x)
+  case Loop(list) => {
     val i_global = Fresh("i_global")
     val i_local1 = Fresh("i_local1")
     val i_local2 = Fresh("i_local2")
@@ -250,11 +245,10 @@ def compile_prog(prog: List[Token]): String = prog match {
     i"%${i_local3} = add i64 1, %${i_local2}" ++
     i"store i64 %${i_local3}, i64* %${i_global}" ++
     i"br label %${entry}" ++
-    l"${finish}" ++
-    compile_prog(rest)
+    l"${finish}"
   } 
-  case Define(x, y) :: rest => compile_prog(rest)
-  case IfThen(a, b) :: rest => {
+  case Define(x, y) => ""
+  case IfThen(a, b) => {
     val if_block = Fresh("if_block")
     val else_block = Fresh("else_block")
     val isZero = Fresh("isZero")
@@ -265,43 +259,38 @@ def compile_prog(prog: List[Token]): String = prog match {
     i"%${isZero} = icmp eq i64 %${top}, 0" ++
     i"br i1 %${isZero}, label %${else_block}, label %${if_block}" ++
     l"${if_block}" ++
-    compile_prog(a) ++
+    compile_progs(a) ++
     i"br label %${if_exit}" ++
     l"${else_block}" ++
-    compile_prog(b) ++
+    compile_progs(b) ++
     i"br label %${if_exit}" ++
-    l"${if_exit}" ++
-    compile_prog(rest)
+    l"${if_exit}"
   }
-  case PrintString(str) :: rest => {
+  case PrintString(str) => {
     val string_ref = Fresh("string_ref")
     val string_ptr = Fresh("string_ptr")
     i";PRINT STRING ${str}" ++
     i"%${string_ref} = alloca [${str.length+1} x i8]" ++
     s"""  store [${str.length+1} x i8] c"${str}\\00", [${str.length+1} x i8]* %${string_ref}""" ++
     i"\n  %${string_ptr} = getelementptr [${str.length+1} x i8], [${str.length+1} x i8]* %${string_ref}, i64 0, i64 0" ++
-    i"call i64 (i8*, ...) @printf(i8* %${string_ptr})" ++
-    compile_prog(rest)
+    i"call i64 (i8*, ...) @printf(i8* %${string_ptr})"
   }
-  case AssignVariable(str) :: rest => {
+  case AssignVariable(str) => {
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
-    i"store i64 %${top}, i64* @.${str}" ++
-    compile_prog(rest)
+    i"store i64 %${top}, i64* @.${str}"
   }
-  case FetchVariable(str) :: rest => {
+  case FetchVariable(str) => {
     val var_local = Fresh("var_local")
     i"%${var_local} = load i64, i64* @.${str}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i64 %${var_local})" ++
-    compile_prog(rest)
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${var_local})"
   }
-  case Constant(str) :: rest => {
+  case Constant(str) => {
     val top = Fresh("top")
     i";constant ${str}" ++ i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
-    i"store i64 %${top}, i64* @.${str}" ++
-    compile_prog(rest)
+    i"store i64 %${top}, i64* @.${str}" 
   }
-  case _ :: rest => compile_prog(rest)
+  case _ => ""
 }
 
 def compile_loop(loopRoutine: List[Token], innerIndexString: String,
@@ -874,16 +863,32 @@ def compile_command(str: String): String = str.toUpperCase match {
   case "ROLL" => {
     "" //TODO
   }
+  case "PICK" => {
+    "" //also TODO
+  }
   case cmd => {
     i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
   }
+}
+
+
+def compile_definitions(prog: List[Token]): String = {
+  (for (token <- prog) yield {
+    compile_definition(token)
+  }).mkString("")
+}
+
+def compile_progs(prog: List[Token]): String = {
+  (for (token <- prog) yield {
+    compile_prog(token)
+  }).mkString("")
 }
 
 def compile(prog: List[Token]): String = {
   prelude ++ 
   compile_definitions(prog) ++
   mainBegin ++
-  compile_prog(prog) ++
+  compile_progs(prog) ++
   ending
 }
 
@@ -898,6 +903,7 @@ def write(fname: String) = {
     val generationCode = os.read(codeGenerationPath)
     val inputFile = os.read(path).concat(" ")
     val ast = tree(generationCode.concat(inputFile))
+    // global_ast = ast
     val code = compile(ast)
     if (!os.isDir(os.pwd / file)) os.makeDir(os.pwd / file)
     os.write.over(os.pwd / file / (file ++ ".ll"), code)
@@ -908,9 +914,9 @@ def write(fname: String) = {
 
 @main
 def timeCompile(fname: String) = {
-    timer{
-      write(fname)
-    }
+  timer{
+    write(fname)
+  }
 }
 
 @main
@@ -929,13 +935,13 @@ def timeRun(fname: String) = {
     }
 }
 
-// @main
-// def timeRunOnly(fname: String) = {
-//     val path = os.pwd / fname 
-//     val file = fname.stripSuffix("." ++ path.ext)
-//     write(fname)
-//     print("\n")
-//     timer{
-//       os.proc(("./" ++ file) / file).call(stdout = os.Inherit)
-//     }
-// }
+@main
+def timeRunOnly(fname: String) = {
+    val path = os.pwd / fname 
+    val file = fname.stripSuffix("." ++ path.ext)
+    write(fname)
+    print("\n")
+    timer{
+      os.proc("./" ++ file ++ "/" ++ file).call(stdout = os.Inherit)
+    }
+}
