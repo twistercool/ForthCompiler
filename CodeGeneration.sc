@@ -12,8 +12,38 @@
     amm CodeGeneration.sc write <filenName>
 
 */
-
 import $file.Parser, Parser._
+
+//////////testing site
+
+//the idea is implementing a dictionary that maps commands to more commands, which will eventually be primitives
+//the primitives are strings of LLVM code
+//the code generated will be the correct assortment of primitives based on the words in the forth file
+
+//maybe make the parser find specific words as primitives and the rest as commands? idk
+
+var compilation: Boolean = false;
+
+type Def = Map[Command, List[Token]]
+
+var dictionary: Def = Map((Command("2DUP") -> List(Command("OVER"), (Command("OVER")))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////////////end of testing site
+
 
 // for generating new labels
 var counter = -1
@@ -185,13 +215,15 @@ val ending = """
 
 
 // This compiles the definitions into functions and strings into global variables
-def compile_definition(prog: Token): String = prog match {
+def compile_definition(token: Token): String = token match {
   case Define(Command(id), list)  => {
-    m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
-    m"{" ++
-    compile_progs(list) ++
-    i"ret void" ++
-    m"}"
+    dictionary = dictionary + (Command(id) -> list)
+    ""
+    // m"\ndefine void @Stack_Function_${id}(%stackType* %stack, %stackType* %return_stack) nounwind" ++
+    // m"{" ++
+    // compile_progs(list) ++
+    // i"ret void" ++
+    // m"}"
   }
   case Constant(str)  => {
     val load_constant = Fresh("load_constant")
@@ -212,7 +244,7 @@ def compile_definition(prog: Token): String = prog match {
 }
 
 
-def compile_prog(prog: Token): String = prog match {
+def compile_prog(token: Token): String = token match {
   case Push(x) => {
     i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})"
   }
@@ -867,7 +899,14 @@ def compile_command(str: String): String = str.toUpperCase match {
     "" //also TODO
   }
   case cmd => {
-    i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
+    dictionary.get(Command(cmd)) match {
+      case None => {
+        println(s"Word $cmd not in dictionary")
+        ""
+      }
+      case Some(list) => compile_progs(list)
+    }
+    // i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
   }
 }
 
@@ -903,6 +942,7 @@ def write(fname: String) = {
     val generationCode = os.read(codeGenerationPath)
     val inputFile = os.read(path).concat(" ")
     val ast = tree(generationCode.concat(inputFile))
+    println(s"ast is $ast")
     // global_ast = ast
     val code = compile(ast)
     if (!os.isDir(os.pwd / file)) os.makeDir(os.pwd / file)

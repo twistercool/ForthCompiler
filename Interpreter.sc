@@ -1,11 +1,11 @@
 import $file.Parser, Parser._
 
-type Def = Map[Command, List[Node]] //associates a list of commands/subroutines to a definition
+type Def = Map[Command, List[Token]] //associates a list of commands/subroutines to a definition
 type Stack = List[Int] //top of the stack is index 0
 
-def eval(prog: List[Node]): (Def, Stack) = eval_prog(prog, Map(), List())
+def eval(prog: List[Token]): (Def, Stack) = eval_prog(prog, Map(), List())
 
-def eval_prog(prog: List[Node], defs: Def, stack: Stack): (Def, Stack) = prog match {
+def eval_prog(prog: List[Token], defs: Def, stack: Stack): (Def, Stack) = prog match {
   case Nil => (defs, stack)
   case Push(x) :: rest => eval_prog(rest, defs, x :: stack)
   case Define(x, y) :: rest => eval_prog(rest, defs + (x -> y), stack)
@@ -21,7 +21,7 @@ def eval_prog(prog: List[Node], defs: Def, stack: Stack): (Def, Stack) = prog ma
   }
 }
 
-def eval_loop(loopProg: List[Node], fullLoopProg: List[Node],
+def eval_loop(loopProg: List[Token], fullLoopProg: List[Token],
     defs: Def, stack: Stack, end: Int, current: Int): (Def, Stack) = loopProg match {
     case Nil => {
         if ((current + 1) == end) (defs, stack)
