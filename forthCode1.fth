@@ -1,4 +1,3 @@
-\ hello world program in forth	
 CR
 : STAR 42 EMIT ;
 : STARS 0 DO STAR LOOP ;

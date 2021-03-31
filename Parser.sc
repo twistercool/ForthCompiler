@@ -26,22 +26,15 @@ case class Constant(str: String) extends Token
 case object Comment extends Token
 case object Whitespace extends Token
 
-def command[_: P]: P[Command] = P(
-                    ("+"|"-"|"*"|"/"|"*/MOD"|"/MOD"|"*/MOD"|".").!.map{ str => Command(str) } | 
-                    (">R"|"R>"|"R@").!.map{ str => Command(str) } |
-                    ("0<>"|"<>"|"<"|"="|">"|"0<"|"0="|"0>").!.map{ str => Command(str) } |
-                    ("1+"|"1-"|"?DUP").!.map{ str => Command(str) }
-)
+// The grammar of the parser is defined below:
 def number[_: P]: P[Push] = P(
-    (("-".? ~ CharIn("1-9") ~ CharIn("0-9").rep).! ~ white )
-        .map{ case (x, y) => Push(x.toInt) } | 
-    ("0" ~ white)
-        .map{ x => Push(0) } |
+    (("-".? ~ CharIn("0-9").rep(1)).! ~ white )
+        .map{ case (x, _) => Push(x.toInt) } | 
     ("[CHAR]" ~ white ~ (CharIn("!-~").rep(1).!))
-        .map{ case (w, x) => Push(x(0).toInt) }
+        .map{ case (_, x) => Push(x(0).toInt) }
 )
 def str[_: P]: P[PrintString] = P(
-    (".\" " ~ (!"\"" ~ AnyChar).rep.! ~ "\"").map{ x => PrintString(x) }
+    (".\" " ~ (!"\"" ~ AnyChar).rep.! ~ "\"").map{ str => PrintString(str) }
 )
 def comment[_: P]: P[Token] = P(
     (("(" ~ (!")" ~ AnyChar).rep ~ ")").! | 
@@ -53,19 +46,23 @@ def white[_: P]: P[Token] = P(
         .map{ _ => Whitespace }
 )
 def idParser[_: P]: P[Command] = P(
-    !("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE"| "CONSTANT" | "DO" | number) ~ 
-        (CharIn("A-Za-z0-9_?").rep(1)).!
-        .map{ x => Command(x.toUpperCase) }
+    (!("LOOP" | "THEN" | "ELSE" | "IF" | "VARIABLE"| "CONSTANT" | "DO" | number) ~ 
+        (!CharIn("\"\\:;() \r\n\t") ~ AnyChar).rep(1).! ~ white)
+        .map{ case(x, _) => Command(x.toUpperCase.replace("/", "DIV").replace("*", "MUL")
+                .replace("?", "QMARK").replace(">", "GREATER").replace("<", "LESS")
+                .replace("+", "PLUS").replace("-", "MINUS")) }
 )
 def defineVariable[_: P]: P[Variable] = P(
-    ("VARIABLE" ~ white ~ idParser).map{ case (w, Command(x)) => Variable(x) }
+    ("VARIABLE" ~ white ~ idParser)
+        .map{ case (w, Command(x)) => Variable(x) }
 )
 def fetchVariable[_: P]: P[FetchVariable] = P(
-    (idParser ~ white ~ "@").map{ case (Command(x), w) => FetchVariable(x) }
+    (idParser ~ "@")
+        .map{ case Command(x) => FetchVariable(x) }
 )
 def assignVariable[_: P]: P[AssignVariable] = P(
-    (idParser ~ white ~ "!")
-        .map{ case (Command(id), _) => AssignVariable(id) }
+    (idParser ~ "!")
+        .map{ case Command(id) => AssignVariable(id) }
 )
 def defineConstant[_: P]: P[Constant] = P(
     ("CONSTANT" ~ white ~ idParser).map{ case (w, Command(x)) => Constant(x) }
@@ -75,7 +72,7 @@ def definition[_: P]: P[Define] = P(
         .map{ case (w, x, y) => Define(x, y) }
 )
 def subroutine[_: P]: P[List[Token]] = P(
-    ((str | comment | fetchVariable | assignVariable | number | loop | command | white | idParser | ifThen).rep(1))
+    ((str | comment | fetchVariable | assignVariable | number | loop | white | idParser | ifThen).rep(1))
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 def loop[_: P]: P[Loop] = P(
@@ -89,8 +86,8 @@ def ifThen[_: P]: P[IfThen] = P(
         .map{ case (x, y) => IfThen(x, y) }
 )
 def program[_: P]: P[List[Token]] = P(
-    (defineConstant | defineVariable | fetchVariable | assignVariable | str | definition |
-    white | ifThen | comment | number | loop | command | idParser).rep(1)
+    ((defineConstant | defineVariable | fetchVariable | assignVariable | str | definition |
+    white | ifThen | comment | number | loop | idParser).rep(1) ~ End)
         .map{ x => x.toList.filter({case Comment => false case Whitespace => false case _ => true}) }
 )
 
