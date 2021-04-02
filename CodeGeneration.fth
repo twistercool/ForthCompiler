@@ -2,6 +2,7 @@
 : SPACES ( x0 --  ) 0 DO SPACE LOOP ;
 : FALSE (  --  0 ) 0 ;
 : TRUE (  --  -1 ) -1 ;
+: -ROT ( x0 x1 x2 -- x2 xx0 x1 ) ROT ROT ;
 : TUCK ( x0 x1 -- x1 x0 x1 ) SWAP OVER ;
 : NIP ( x0 x1 -- x1 ) SWAP DROP ;
 : PRINTALL ( x0 x1 x2 ... xn --  ) DEPTH 0 DO . LOOP ;
@@ -15,10 +16,14 @@
 : */ ( x0 x1 x2 -- {x0*x1}/x2 ) ROT * SWAP / ;
 : 2* ( x -- 2x ) 2 * ;
 : 2/ ( x -- x/2 ) 2 / ;
+: /MOD 2DUP / -ROT MOD ;
+: */MOD -ROT * SWAP /MOD ;
 : ?DUP ( x -- or x -- x ) DUP 0= IF DROP ELSE DUP THEN ;
-: -ROT ( x0 x1 x2 -- x2 xx0 x1 ) ROT ROT ;
-: 0<> ( ) 0= INVERT ;
+: 0<> ( x -- flag) 0= INVERT ;
 : 1+ ( x -- x+1 ) 1 + ;
 : 1- ( x -- x-1 ) 1 - ;
-: <> ( x0 x1 -- {x0 != x1} ) = INVERT ;
+: <> ( x0 x1 -- flag ) = INVERT ;
 : NEGATE ( x -- -x ) 0 SWAP - ;
+: 2R> R> R> SWAP ;
+: 2>R  SWAP >R >R ;
+: 2R@ R> R> 2DUP >R >R SWAP ;

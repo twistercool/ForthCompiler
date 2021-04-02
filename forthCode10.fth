@@ -23,4 +23,5 @@ VARIABLE NBTOCHECK
 
 100 AREPRIME
 
-\ */MOD /MOD 0<> <> < = > 0< 0= 0> 1+ 1- 2 dab @ dab ! R> >R R@ + - * / MOD .
+\ */MOD /MOD 0<> <> < = > 0< 0= 0> 1+ 1- 2 dab @ dab ! R> >R R@ + - * / MOD . CHAR
+\ CHAR 4 .

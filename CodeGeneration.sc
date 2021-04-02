@@ -749,10 +749,7 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"%${isSmaller} = icmp slt i64 %${top}, %${second}" ++
     i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
     l"${topsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i64 -1)" ++
-    i"br label %${finish}" ++
-    l"${secondsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64@ 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -780,12 +777,12 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})"
   }
-  case "RLESS" => {
+  case "RGREATER" => {
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
-  case "R@" => {
+  case "RAT" => {
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
     i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})" ++

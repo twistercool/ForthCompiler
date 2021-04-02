@@ -30,7 +30,7 @@ case object Whitespace extends Token
 def number[_: P]: P[Push] = P(
     (("-".? ~ CharIn("0-9").rep(1)).! ~ white )
         .map{ case (x, _) => Push(x.toInt) } | 
-    ("[CHAR]" ~ white ~ (CharIn("!-~").rep(1).!))
+    (("[CHAR]"|"CHAR") ~ white ~ (CharIn("!-~").rep(1).!))
         .map{ case (_, x) => Push(x(0).toInt) }
 )
 def str[_: P]: P[PrintString] = P(
@@ -50,7 +50,7 @@ def idParser[_: P]: P[Command] = P(
         (!CharIn("\"\\:;() \r\n\t") ~ AnyChar).rep(1).! ~ white)
         .map{ case(x, _) => Command(x.toUpperCase.replace("/", "DIV").replace("*", "MUL")
                 .replace("?", "QMARK").replace(">", "GREATER").replace("<", "LESS")
-                .replace("+", "PLUS").replace("-", "MINUS")) }
+                .replace("+", "PLUS").replace("-", "MINUS").replace("@","AT")) }
 )
 def defineVariable[_: P]: P[Variable] = P(
     ("VARIABLE" ~ white ~ idParser)
