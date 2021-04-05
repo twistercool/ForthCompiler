@@ -18,7 +18,7 @@
 : 2/ ( x -- x/2 ) 2 / ;
 : /MOD 2DUP / -ROT MOD ;
 : */MOD -ROT * SWAP /MOD ;
-: ?DUP ( x -- or x -- x ) DUP 0= IF DROP ELSE DUP THEN ;
+: ?DUP ( x -- x or x -- x x ) DUP 0<> IF DUP THEN ;
 : 0<> ( x -- flag) 0= INVERT ;
 : 1+ ( x -- x+1 ) 1 + ;
 : 1- ( x -- x-1 ) 1 - ;

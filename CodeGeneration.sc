@@ -114,7 +114,7 @@ define i64 @printSpace()
 ;this is where I define the stackType, it holds the length of the stack and the stack itself (array of i64)
 %stackType = type { 
   i64, ; 0: holds the current length of the stack, or the amount of elements in it 
-  <256 x i64> ; 1: an array of the elements  
+  [256 x i64] ; 1: an array of the elements  
 }
 
 ; constructor for %stackType
@@ -126,9 +126,9 @@ define void @Stack_Create_Empty(%stackType* %this) nounwind
 
   ; initialises the array to empty
   %2 = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %empty_stack = alloca <256 x i64>
-  %loaded = load <256 x i64>, <256 x i64>* %empty_stack
-  store <256 x i64> %loaded, <256 x i64>* %2
+  %empty_stack = alloca [256 x i64]
+  %loaded = load [256 x i64], [256 x i64]* %empty_stack
+  store [256 x i64] %loaded, [256 x i64]* %2
   ret void
 }
 
@@ -190,7 +190,7 @@ define void @Stack_PushInt(%stackType* %this, i64 %int) nounwind
 
   ; gets the pointer element at index %length of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %1 = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %length
+  %1 = getelementptr [256 x i64], [256 x i64]* %stack, i32 0, i64 %length
   ; stores the number in the given pointer
   store i64 %int, i64* %1
 
@@ -207,7 +207,7 @@ define i64 @Stack_Pop(%stackType* %this) nounwind
 
   ; gets the pointer element at index %index of the array
   %stack = getelementptr %stackType, %stackType* %this, i32 0, i32 1
-  %indexptr = getelementptr <256 x i64>, <256 x i64>* %stack, i32 0, i64 %index
+  %indexptr = getelementptr [256 x i64], [256 x i64]* %stack, i32 0, i64 %index
   ; loads the number from the given pointer
   %popped = load i64, i64* %indexptr
 
@@ -718,7 +718,7 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
-  case "LESS" => {
+  case "LESS" => { // <
     val top = Fresh("top")
     val second = Fresh("second")
     val isSmaller = Fresh("isSmaller")
@@ -737,19 +737,18 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
-  case "GREATER" => {
+  case "GREATER" => { // >
     val top = Fresh("top")
     val second = Fresh("second")
     val isSmaller = Fresh("isSmaller")
     val topsmaller = Fresh("topsmaller")
-    val secondsmaller = Fresh("secondsmaller")
     val finish = Fresh("finish")
     i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"%${isSmaller} = icmp slt i64 %${top}, %${second}" ++
-    i"br i1 %${isSmaller}, label %${topsmaller}, label %${secondsmaller}" ++
+    i"br i1 %${isSmaller}, label %${topsmaller}, label %${topsmaller}" ++
     l"${topsmaller}" ++
-    i"call void @Stack_PushInt(%stackType* %stack, i64@ 0)" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 0)" ++
     i"br label %${finish}" ++
     l"${finish}"
   }
@@ -772,17 +771,17 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"br label %${finish}" ++
     l"${finish}"
   }
-  case "GREATERR" => {
+  case "GREATERR" => { // >R
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
     i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})"
   }
-  case "RGREATER" => {
+  case "RGREATER" => { // R>
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${top})"
   }
-  case "RAT" => {
+  case "RAT" => { // R@
     val top = Fresh("top")
     i"%${top} = call i64 @Stack_Pop(%stackType* %return_stack)" ++
     i"call void @Stack_PushInt(%stackType* %return_stack, i64 %${top})" ++
@@ -835,6 +834,24 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"%${andValue} = and i64 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${andValue})"
   }
+  case "LSHIFT" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val shifted = Fresh("shifted")
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${shifted} = shl i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${shifted})"
+  }
+  case "RSHIFT" => {
+    val top = Fresh("top")
+    val second = Fresh("second")
+    val shifted = Fresh("shifted")
+    i"%${top} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${second} = call i64 @Stack_Pop(%stackType* %stack)" ++
+    i"%${shifted} = lshr i64 %${second}, %${top}" ++
+    i"call void @Stack_PushInt(%stackType* %stack, i64 %${shifted})"
+  }
   case "SQRT" => {
     "" //todo?
   }
@@ -879,53 +896,62 @@ def compile(prog: List[Token]): String = {
 
 import ammonite.ops._
 
+/*
+  This function is callable from the command line
+  It reads the library file, reads the input file and compiles them
+  If fit doesn't find the library file, it doesn't append anything to the input file
+  If it doesn't find the input file, it returns an exception
+
+  It compiles everything into a new folder that contains 3 files, the .ll containing
+  the LLVM, the .o file and the runnable file without an extension name
+
+  @param = name of the file to compile
+*/
 @main
-def write(fname: String) = {
+def compileFile(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
     //adds the CodeGeneration.fth Forth code
-    val codeGenerationPath = os.pwd / "CodeGeneration.fth"
-    val generationCode = os.read(codeGenerationPath)
-    val inputFile = os.read(path).concat(" ")
-    val ast = tree(generationCode.concat(inputFile))
-    // println(s"ast is $ast")
-    // global_ast = ast
+    var ast: List[Token] = List()
+    try {
+      val generationCode = os.read(os.pwd / "CodeGeneration.fth")
+      ast = tree(generationCode.concat(os.read(path).concat(" ")))
+    }
+    catch {
+      case e: Exception => {
+        ast = tree(os.read(path).concat(" "))
+      }
+    }
     val code = compile(ast)
+
     if (!os.isDir(os.pwd / file)) os.makeDir(os.pwd / file)
+    
     os.write.over(os.pwd / file / (file ++ ".ll"), code)
     os.proc("llc", "-O3", "-filetype=obj", file / (file ++ ".ll")).call()
-    os.proc("clang", "-v", file /(file ++ ".o"), "-o", file / file).call()
+    os.proc("clang", file /(file ++ ".o"), "-o", file / file).call()
     println("File Compiled")
-}
-
-@main
-def timeCompile(fname: String) = {
-  timer{
-    write(fname)
-  }
 }
 
 @main
 def run(fname: String) = {
     val path = os.pwd / fname
     val file = fname.stripSuffix("." ++ path.ext)
-    write(fname)
+    compileFile(fname)
     os.proc("./" ++ file ++ "/" ++ file).call(stdout = os.Inherit)
     println(s" ok")
 }
 
 @main
-def timeRun(fname: String) = {
-    timer{
-      run(fname)
-    }
-}
+def timeCompile(fname: String) = timer{ compileFile(fname) }
+
+@main
+def timeRun(fname: String) = timer{ run(fname) }
 
 @main
 def timeRunOnly(fname: String) = {
     val path = os.pwd / fname 
     val file = fname.stripSuffix("." ++ path.ext)
-    write(fname)
+    compileFile(fname)
     print("\n")
     timer{
       os.proc("./" ++ file ++ "/" ++ file).call(stdout = os.Inherit)

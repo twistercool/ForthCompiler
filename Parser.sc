@@ -115,24 +115,18 @@ def timer[T](function: => T): T = {
     result
 }
 
-
-
 @main
-def timeParse(fname: String) = {
-    timer{
+def parseFile(fname: String) = {
     val path = os.pwd / fname
-    val file = fname.stripSuffix("." ++ path.ext)
-    val ast = tree(os.read(path).concat(" "))
-    }
-}
-
-@main
-    def parseFile(fname: String) = {
-    val path = os.pwd / fname
-    val file = fname.stripSuffix("." ++ path.ext)
     val ast = tree(os.read(path).concat(" "))
     println(ast)
 }
 
+@main
+def timeParse(fname: String) = {
+    timer{
+        parseFile(fname)
+    }
+}
 
 
