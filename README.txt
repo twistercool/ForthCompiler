@@ -1,12 +1,15 @@
-This is the repository for my Forth Compiler Project
+This is the Forth Compiler final year Project
 In order to run it, you have to have the following CLI tools installed: 
-- the Ammonite REPL (therefore scala and the JVM)
-- the LLVM CLI tools (llc and lli for now)
+- The Ammonite REPL (therefore scala and the JVM)
+- The LLVM tools
+- Clang
 
-You can write forth code in any .txt file (but please use .fth) in the same directory as the other files and you can get the Abstract Syntax Tree by writing:
+You can write forth code in a .fth file in the same working directory as the compilation files
+
+You can get the parse tree by writing:
   amm Parser.sc parseFile <filename>
   
-To use the Interpreter, use the following command:
+Although it does not have the latest features, to use the Interpreter, use the following command:
   amm Interpreter.sc runFile <filename>
   
 You can also compile the code to LLVM-IR and get a .ll file with the command:
