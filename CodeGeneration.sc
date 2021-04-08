@@ -2,47 +2,19 @@
     
     This is the code generator for the Forth Compiler project
 
-    To run a Forth .fth file, run this command:
+    To run a Forth .fth file, run this command in the same directory as the Forth file:
 
-    amm CodeGeneration.sc run <fileName>
+    amm <path to CodeGeneration.sc> run <fileName>
+
+    The library will need to be in thw current working directory to be imported
 
 
     To compile a Forth .fth file to LLVM-IR without running it, run this command:
 
-    amm CodeGeneration.sc write <filenName>
+    amm CodeGeneration.sc compileFile <filenName>
 
 */
 import $file.Parser, Parser._
-
-//////////testing site
-
-//the idea is implementing a dictionary that maps commands to more commands, which will eventually be primitives
-//the primitives are strings of LLVM code
-//the code generated will be the correct assortment of primitives based on the words in the forth file
-
-//maybe make the parser find specific words as primitives and the rest as commands? idk
-
-var compilation: Boolean = false;
-
-// type Def = Map[Command, List[Token]]
-
-// var dictionary: Def = Map()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////////////////////////////end of testing site
 
 
 // for generating new labels
@@ -59,6 +31,7 @@ def Fresh(x: String) = {
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
 
+// These operator overloads have been taken from the 6CCS2CFL module
 implicit def string_inters(sc: StringContext) = new {
     def i(args: Any*): String = "  " ++ sc.s(args:_*) ++ "\n"
     def l(args: Any*): String = sc.s(args:_*) ++ ":\n"
@@ -66,7 +39,7 @@ implicit def string_inters(sc: StringContext) = new {
 }
 
 
-val prelude = """
+val begin = """
 
 ; string template for a number
 @.str = private constant [4 x i8] c"%d \00"
@@ -267,10 +240,6 @@ def compile_definition(token: Token): String = token match {
 
 
 def compile_prog(token: Token): String = token match {
-  // case Define(Command(id), list)  => {
-  //   dictionary = dictionary + (Command(id) -> list)
-  //   ""
-  // }
   case Push(x) => {
     i";push ${x}" ++ i"call void @Stack_PushInt(%stackType* %stack, i64 ${x})"
   }
@@ -456,6 +425,7 @@ def compile_loop(loopRoutine: List[Token], innerIndexString: String,
   case _ :: rest => compile_loop(rest, innerIndexString, outerIndexString, finishLabel)
 }
 
+//implements all primitves handled by the system
 def compile_command(str: String): String = str.toUpperCase match {
   case "PLUS" => { 
     val top = Fresh("top")
@@ -852,23 +822,7 @@ def compile_command(str: String): String = str.toUpperCase match {
     i"%${shifted} = lshr i64 %${second}, %${top}" ++
     i"call void @Stack_PushInt(%stackType* %stack, i64 %${shifted})"
   }
-  case "SQRT" => {
-    "" //todo?
-  }
-  case "ROLL" => {
-    "" //TODO
-  }
-  case "PICK" => {
-    "" //also TODO
-  }
   case cmd => {
-    // dictionary.get(Command(cmd)) match {
-    //   case None => {
-    //     println(s"Word $cmd not in dictionary")
-    //     ""
-    //   }
-    //   case Some(list) => compile_progs(list)
-    // }
     i"call void @Stack_Function_${cmd}(%stackType* %stack, %stackType* %return_stack)"
   }
 }
@@ -887,7 +841,7 @@ def compile_progs(prog: List[Token]): String = {
 }
 
 def compile(prog: List[Token]): String = {
-  prelude ++ 
+  begin ++ 
   compile_definitions(prog) ++
   mainBegin ++
   compile_progs(prog) ++
