@@ -6,7 +6,7 @@
     The Scala language requires the Java Virtual Machine in order to run.
     To get the AST of a forth file (.fth), input the following command in the same directory as this file:
 
-    amm Parser.sc Parserfile <Filename.fth>
+    amm Parser.sc parseFile <Filename.fth>
 */
 
 
@@ -123,10 +123,6 @@ def parseFile(fname: String) = {
 }
 
 @main
-def timeParse(fname: String) = {
-    timer{
-        parseFile(fname)
-    }
-}
+def timeParse(fname: String) = timer{ parseFile(fname) }
 
 
