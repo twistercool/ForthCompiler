@@ -1,10 +1,24 @@
-: FIZZBUZZ ( n -- ) \outputs fizzbuzz until n
-    1+ 0 DO 
-    I 15 MOD 0= IF ." FizzBuzz " CR
-    ELSE I 5 MOD 0= IF ." Buzz " CR
-    ELSE I 3 MOD 0= IF ." Fizz " CR
-    ELSE I . CR
-    THEN THEN THEN
+VARIABLE NBTOCHECK
+: ISPRIME ( n -- )
+    NBTOCHECK !
+    NBTOCHECK @ 2 < IF NBTOCHECK @ . ." IS NOT PRIME " 
+    ELSE
+        NBTOCHECK @ 2 = IF NBTOCHECK @ . ." IS PRIME " 
+        ELSE 
+            NBTOCHECK @ 2 DO
+                NBTOCHECK @ 1- I = IF NBTOCHECK @ . ." IS PRIME " LEAVE 
+                ELSE
+                    NBTOCHECK @ I MOD 0= IF NBTOCHECK @ . ." IS NOT PRIME " LEAVE
+                THEN THEN
+            LOOP 
+        THEN 
+    THEN
+;
+
+: AREPRIME ( n -- )
+    1+ 1 DO
+        I ISPRIME CR
     LOOP
 ;
-100 FIZZBUZZ
+
+100 AREPRIME

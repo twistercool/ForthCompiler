@@ -1,3 +1,4 @@
+\\this example is taken from the "learning forth" website
 : EGGSIZE
    DUP 18 < IF  ." reject "      ELSE
    DUP 21 < IF  ." small "       ELSE
