@@ -3,3 +3,4 @@
 !*.fth    #unignore forth files
 !.gitignore #unignore .gitignore
 !.txt       #unignore text files
+!/ForthCodeForTesting/*
